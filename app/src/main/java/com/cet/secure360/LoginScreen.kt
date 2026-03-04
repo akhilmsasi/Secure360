@@ -49,6 +49,27 @@ fun LoginMainScreen(
     onLoginSuccess: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    var showRegisterPopup by remember { mutableStateOf(false) }
+
+    if (showRegisterPopup) {
+        AlertDialog(
+            onDismissRequest = { showRegisterPopup = false },
+            confirmButton = {
+                TextButton(onClick = { showRegisterPopup = false }) {
+                    Text("OK", color = AccentTeal)
+                }
+            },
+            title = {
+                Text(text = "Registration Notice", color = TextPrimary, fontWeight = FontWeight.Bold)
+            },
+            text = {
+                Text(text = "Please Use Mobile App To Create Account", color = TextSecondary)
+            },
+            containerColor = SurfaceDark,
+            shape = RoundedCornerShape(16.dp)
+        )
+    }
+
     Row(
         modifier = Modifier
             .fillMaxSize()
@@ -118,7 +139,10 @@ fun LoginMainScreen(
                 .padding(48.dp),
             contentAlignment = Alignment.Center
         ) {
-            LoginScreen(onNavigateToRegister = onNavigateToRegister, onLoginSuccess = onLoginSuccess)
+            LoginScreen(
+                onRegisterClick = { showRegisterPopup = true },
+                onLoginSuccess = onLoginSuccess
+            )
         }
     }
 }
@@ -137,7 +161,7 @@ private fun FeatureItem(icon: androidx.compose.ui.graphics.vector.ImageVector, t
 
 @Composable
 fun LoginScreen(
-    onNavigateToRegister: () -> Unit,
+    onRegisterClick: () -> Unit,
     onLoginSuccess: () -> Unit,
     viewModel: LoginViewModel = viewModel()
 ) {
@@ -295,7 +319,7 @@ fun LoginScreen(
                     color = AccentTeal,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Bold,
-                    modifier = Modifier.clickable { onNavigateToRegister() }
+                    modifier = Modifier.clickable { onRegisterClick() }
                 )
             }
         }
