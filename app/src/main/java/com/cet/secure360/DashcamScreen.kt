@@ -446,18 +446,41 @@ fun ClipListPanel(
 
         Divider(color = DividerColor, thickness = 1.dp)
 
-        // Clip List
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(vertical = 6.dp)
-        ) {
-            items(incidents) { incident ->
-                ClipListItem(incident = incident)
-                Divider(
-                    color = DividerColor.copy(alpha = 0.5f),
-                    thickness = 0.5.dp,
-                    modifier = Modifier.padding(horizontal = 12.dp)
-                )
+        // Clip List or Empty State
+        if (incidents.isEmpty()) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Icon(
+                        imageVector = Icons.Default.VideoLibrary,
+                        contentDescription = null,
+                        tint = TextSecondary.copy(alpha = 0.3f),
+                        modifier = Modifier.size(64.dp)
+                    )
+                    Spacer(Modifier.height(12.dp))
+                    Text(
+                        text = "No Recorded Video Error",
+                        color = TextSecondary,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+            }
+        } else {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(vertical = 6.dp)
+            ) {
+                items(incidents) { incident ->
+                    ClipListItem(incident = incident)
+                    Divider(
+                        color = DividerColor.copy(alpha = 0.5f),
+                        thickness = 0.5.dp,
+                        modifier = Modifier.padding(horizontal = 12.dp)
+                    )
+                }
             }
         }
     }
