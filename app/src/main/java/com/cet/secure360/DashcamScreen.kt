@@ -107,6 +107,7 @@ fun DashcamScreen() {
                         selectedTab = selectedTab,
                         onTabSelected = { selectedTab = it },
                         incidents = filteredIncidents,
+                        selectedIncident = selectedIncident,
                         onIncidentClick = { selectedIncident = it }
                     )
 
@@ -167,11 +168,19 @@ fun DashcamScreen() {
                             )
                         }
                         else -> {
+                            // Home, Settings, Apps, Phone
                             ClipListPanel(
                                 modifier = rightPanelModifier,
                                 selectedTab = selectedTab,
                                 onTabSelected = { selectedTab = it },
-                                incidents = filteredIncidents
+                                incidents = filteredIncidents,
+                                selectedIncident = if (currentNavItem == DashcamNavItem.Home) null else selectedIncident,
+                                onIncidentClick = { incident ->
+                                    selectedIncident = incident
+                                    if (currentNavItem == DashcamNavItem.Home) {
+                                        currentNavItem = DashcamNavItem.Video
+                                    }
+                                }
                             )
                         }
                     }
@@ -530,6 +539,7 @@ fun ClipListPanel(
     selectedTab: ClipTab,
     onTabSelected: (ClipTab) -> Unit,
     incidents: List<IncidentRecord>,
+    selectedIncident: IncidentRecord? = null,
     onIncidentClick: (IncidentRecord) -> Unit = {}
 ) {
     Column(
@@ -588,6 +598,7 @@ fun ClipListPanel(
                 items(incidents) { incident ->
                     ClipListItem(
                         incident = incident,
+                        isSelected = incident.id == selectedIncident?.id,
                         onClick = { onIncidentClick(incident) }
                     )
                     Divider(
@@ -639,11 +650,13 @@ private fun ClipTabItem(
 @Composable
 private fun ClipListItem(
     incident: IncidentRecord,
+    isSelected: Boolean = false,
     onClick: () -> Unit = {}
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .background(if (isSelected) SurfaceVariant else Color.Transparent)
             .clickable { onClick() }
             .padding(horizontal = 12.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -709,8 +722,8 @@ private fun ClipListItem(
             Text(
                 text = "${incident.title} - ${incident.date}",
                 fontSize = 14.sp,
-                color = TextPrimary,
-                fontWeight = FontWeight.Medium,
+                color = if (isSelected) AccentTeal else TextPrimary,
+                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
@@ -728,7 +741,7 @@ private fun ClipListItem(
                 Text(
                     text = "${incident.placeCityName}, ${incident.roadName}",
                     fontSize = 11.sp,
-                    color = TextSecondary
+                    color = if (isSelected) TextPrimary.copy(alpha = 0.8f) else TextSecondary
                 )
             }
         }
@@ -751,7 +764,7 @@ private fun ClipListItem(
                     .height(4.dp)
                     .clip(RoundedCornerShape(2.dp)),
                 color = if (incident.fileUploadedStatus == 100) AccentTeal else Color(0xFFFFA726),
-                trackColor = SurfaceVariant
+                trackColor = if (isSelected) SurfaceDark else SurfaceVariant
             )
         }
     }
