@@ -32,6 +32,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.cet.secure360.model.IncidentRecord
 import com.cet.secure360.model.dummyIncidentList
+import kotlinx.coroutines.delay
 
 // ─── Color Palette ───────────────────────────────────────────────────────────
 
@@ -694,6 +695,27 @@ private fun CarStatChip(
 
 @Composable
 fun RecordButton(isRecording: Boolean, onClick: () -> Unit) {
+    var seconds by remember { mutableStateOf(30) }
+    val maxSeconds = 60
+
+    LaunchedEffect(isRecording) {
+        if (isRecording) {
+            seconds = 30
+            while (seconds < maxSeconds) {
+                delay(1000)
+                seconds++
+            }
+        } else {
+            seconds = 30
+        }
+    }
+
+    val animatedProgress by animateFloatAsState(
+        targetValue = seconds.toFloat() / maxSeconds,
+        animationSpec = tween(durationMillis = 1000, easing = LinearEasing),
+        label = "smooth_progress"
+    )
+
     val infiniteTransition = rememberInfiniteTransition(label = "pulse")
     val glowAlpha by infiniteTransition.animateFloat(
         initialValue = 0.3f,
@@ -706,43 +728,128 @@ fun RecordButton(isRecording: Boolean, onClick: () -> Unit) {
     )
 
     Box(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().height(70.dp),
         contentAlignment = Alignment.Center
     ) {
-        // Outer glow
-        Box(
-            modifier = Modifier
-                .size(220.dp, 70.dp)
-                .clip(RoundedCornerShape(10.dp))
-                .background(AccentRed.copy(alpha = glowAlpha * 0.25f))
-                .blur(16.dp)
-        )
+        if (!isRecording) {
+            // Standard Record Button
+            Box(
+                modifier = Modifier
+                    .size(220.dp, 70.dp)
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(AccentRed.copy(alpha = glowAlpha * 0.25f))
+                    .blur(16.dp)
+            )
 
-        Button(
-            onClick = onClick,
-            modifier = Modifier
-                .height(56.dp)
-                .fillMaxWidth(0.75f),
-            shape = RoundedCornerShape(10.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = AccentRed),
-            elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp)
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            Button(
+                onClick = onClick,
+                modifier = Modifier
+                    .height(56.dp)
+                    .fillMaxWidth(0.75f),
+                shape = RoundedCornerShape(10.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = AccentRed),
+                elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp)
             ) {
-                Text(
-                    text = if (isRecording) "Stop" else "Record",
-                    fontSize = 17.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = Color.White
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Text(
+                        text = "Record",
+                        fontSize = 17.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color.White
+                    )
+                    Box(
+                        modifier = Modifier
+                            .size(10.dp)
+                            .clip(CircleShape)
+                            .background(Color.White)
+                    )
+                }
+            }
+        } else {
+            // Recording State: Rectangular Progress Bar
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth(0.9f)
+                    .height(56.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(SurfaceVariant)
+                    .border(1.dp, Color.White.copy(alpha = 0.1f), RoundedCornerShape(12.dp))
+            ) {
+                // Progress Fill: Rectangular, starting from left, animated smoothly
                 Box(
                     modifier = Modifier
-                        .size(10.dp)
-                        .clip(if (isRecording) RoundedCornerShape(2.dp) else CircleShape)
-                        .background(Color.White)
+                        .fillMaxWidth(animatedProgress)
+                        .fillMaxHeight()
+                        .background(
+                            Brush.horizontalGradient(
+                                colors = listOf(AccentRed.copy(alpha = 0.6f), AccentRed)
+                            )
+                        )
                 )
+
+                // Overlay Content
+                Row(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        // Pulsing red dot
+                        val dotAlpha by infiniteTransition.animateFloat(
+                            initialValue = 0.4f,
+                            targetValue = 1f,
+                            animationSpec = infiniteRepeatable(tween(500), RepeatMode.Reverse),
+                            label = "dot"
+                        )
+                        Box(
+                            modifier = Modifier
+                                .size(8.dp)
+                                .clip(CircleShape)
+                                .background(Color.White.copy(alpha = dotAlpha))
+                        )
+                        Spacer(Modifier.width(12.dp))
+                        
+                        Text(
+                            text = "Recording Progress $seconds:60",
+                            color = Color.White,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+
+                    // STOP button at the right end
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(Color.White.copy(alpha = 0.2f))
+                            .clickable { onClick() }
+                            .padding(horizontal = 12.dp, vertical = 6.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(10.dp)
+                                    .clip(RoundedCornerShape(2.dp))
+                                    .background(Color.White)
+                            )
+                            Text(
+                                text = "STOP",
+                                color = Color.White,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Black
+                            )
+                        }
+                    }
+                }
             }
         }
     }
@@ -1000,4 +1107,10 @@ fun DashcamScreenPreview() {
     MaterialTheme {
         DashcamScreen()
     }
+}
+
+@Composable
+fun EventDetailsMainScreen(incident: IncidentRecord) {
+    // Placeholder for now, as it's defined in another file usually or expected here
+    Text("Event Details for ${incident.id}", color = Color.White)
 }
