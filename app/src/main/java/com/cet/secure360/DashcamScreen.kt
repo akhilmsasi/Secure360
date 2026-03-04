@@ -537,41 +537,72 @@ fun CarPreviewPanel(modifier: Modifier = Modifier) {
             .fillMaxWidth()
             .padding(15.dp)
             .clip(RoundedCornerShape(16.dp))
-            .background(SurfaceDark),
+            .background(SurfaceDark)
+            .border(1.dp, Color.White.copy(alpha = 0.05f), RoundedCornerShape(16.dp)),
         contentAlignment = Alignment.Center
     ) {
         // Subtle gradient glow under car
         Box(
             modifier = Modifier
-                .size(220.dp, 60.dp)
+                .size(260.dp, 80.dp)
                 .align(Alignment.BottomCenter)
-                .offset(y = (-12).dp)
+                .offset(y = (-20).dp)
                 .background(
                     Brush.radialGradient(
                         colors = listOf(
-                            AccentTeal.copy(alpha = 0.15f),
+                            AccentTeal.copy(alpha = 0.2f),
                             Color.Transparent
                         )
                     )
                 )
-                .blur(20.dp)
+                .blur(30.dp)
         )
 
-        Image(
-            painter = painterResource(id = R.drawable.car_image),
-            contentDescription = "Car preview",
-            contentScale = ContentScale.Fit,
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Image(
+                painter = painterResource(id = R.drawable.car_image),
+                contentDescription = "Car preview",
+                contentScale = ContentScale.FillWidth,
+                modifier = Modifier
+                    .padding(bottom = 10.dp)
+            )
+        }
+
+        // Top Left: Car Model Info
+        Column(
             modifier = Modifier
-                .padding(10.dp)
-        )
+                .align(Alignment.TopStart)
+                .padding(16.dp)
+        ) {
+            Text(
+                text = "Secure360 Pro",
+                color = TextPrimary,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold
+            )
+            Text(
+                text = "Vehicle Connected",
+                color = AccentTeal,
+                fontSize = 10.sp,
+                fontWeight = FontWeight.Medium,
+                letterSpacing = 0.5.sp
+            )
+        }
 
-        // Status dot
+        // Top Right: Live Status dot
         Row(
             modifier = Modifier
                 .align(Alignment.TopEnd)
-                .padding(12.dp),
+                .padding(16.dp)
+                .clip(RoundedCornerShape(20.dp))
+                .background(Color.Black.copy(alpha = 0.3f))
+                .padding(horizontal = 10.dp, vertical = 5.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(4.dp)
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
         ) {
             Box(
                 modifier = Modifier
@@ -579,7 +610,82 @@ fun CarPreviewPanel(modifier: Modifier = Modifier) {
                     .clip(CircleShape)
                     .background(AccentTeal)
             )
-            Text("LIVE", fontSize = 9.sp, color = AccentTeal, fontWeight = FontWeight.Bold)
+            Text(
+                text = "LIVE",
+                fontSize = 10.sp,
+                color = AccentTeal,
+                fontWeight = FontWeight.Black
+            )
+        }
+
+        // Bottom Section: Stats Chips
+        Row(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            CarStatChip(
+                modifier = Modifier.weight(1f),
+                icon = Icons.Default.BatteryChargingFull,
+                value = "84%",
+                label = "Battery",
+                color = AccentTeal
+            )
+            CarStatChip(
+                modifier = Modifier.weight(1f),
+                icon = Icons.Default.Speed,
+                value = "12,450 km",
+                label = "Total Dist",
+                color = TextPrimary
+            )
+            CarStatChip(
+                modifier = Modifier.weight(1f),
+                icon = Icons.Default.Security,
+                value = "ACTIVE",
+                label = "Sentry",
+                color = AccentRed
+            )
+        }
+    }
+}
+
+@Composable
+private fun CarStatChip(
+    modifier: Modifier = Modifier,
+    icon: ImageVector,
+    value: String,
+    label: String,
+    color: Color
+) {
+    Box(
+        modifier = modifier
+            .clip(RoundedCornerShape(12.dp))
+            .background(SurfaceVariant.copy(alpha = 0.6f))
+            .padding(vertical = 10.dp, horizontal = 4.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = color,
+                modifier = Modifier.size(18.dp)
+            )
+            Spacer(Modifier.height(6.dp))
+            Text(
+                text = value,
+                color = TextPrimary,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Bold
+            )
+            Text(
+                text = label,
+                color = TextSecondary,
+                fontSize = 9.sp,
+                fontWeight = FontWeight.Medium
+            )
         }
     }
 }
