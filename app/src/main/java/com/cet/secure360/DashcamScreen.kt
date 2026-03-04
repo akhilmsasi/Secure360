@@ -9,6 +9,10 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.outlined.Face
+import androidx.compose.material.icons.outlined.NotificationsActive
+import androidx.compose.material.icons.outlined.ReportProblem
+import androidx.compose.material.icons.outlined.VolumeUp
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -18,6 +22,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -42,7 +47,7 @@ private val DividerColor     = Color(0xFF2E333D)
 
 // ─── Data Models ─────────────────────────────────────────────────────────────
 
-enum class DashcamNavItem { Home, Car, Video, Settings, Cloud, Apps, Phone }
+enum class DashcamNavItem { Home, Car, Video, Cloud, Apps, Phone }
 
 enum class ClipTab { All, Parked, Driving, Shared }
 
@@ -168,7 +173,7 @@ fun DashcamScreen() {
                             )
                         }
                         else -> {
-                            // Home, Settings, Apps, Phone
+                            // Home, Apps, Phone
                             ClipListPanel(
                                 modifier = rightPanelModifier,
                                 selectedTab = selectedTab,
@@ -216,7 +221,6 @@ fun SideNavigationBar(
 
         NavIcon(icon = Icons.Default.DirectionsCar, isSelected = selectedItem == DashcamNavItem.Car, onClick = { onItemClick(DashcamNavItem.Car) })
         NavIcon(icon = Icons.Default.VideoLibrary, isSelected = selectedItem == DashcamNavItem.Video, onClick = { onItemClick(DashcamNavItem.Video) })
-        NavIcon(icon = Icons.Default.VideoSettings, isSelected = selectedItem == DashcamNavItem.Settings, onClick = { onItemClick(DashcamNavItem.Settings) })
         NavIcon(icon = Icons.Default.CloudUpload, isSelected = selectedItem == DashcamNavItem.Cloud, onClick = { onItemClick(DashcamNavItem.Cloud) })
         NavIcon(icon = Icons.Default.Apps, isSelected = selectedItem == DashcamNavItem.Apps, onClick = { onItemClick(DashcamNavItem.Apps) })
         NavIcon(icon = Icons.Default.Phone, isSelected = selectedItem == DashcamNavItem.Phone, onClick = { onItemClick(DashcamNavItem.Phone) })
@@ -292,59 +296,166 @@ fun SafetySettingsPanel(
     Column(
         modifier = modifier
             .fillMaxHeight()
-            .padding(15.dp)
             .clip(RoundedCornerShape(16.dp))
             .background(SurfaceDark)
     ) {
-        Text(
-            text = "Safety & AI Settings",
-            color = TextPrimary,
-            fontSize = 18.sp,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(16.dp)
-        )
+        // Header with specific styling
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(20.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = Icons.Default.AdminPanelSettings,
+                contentDescription = null,
+                tint = AccentTeal,
+                modifier = Modifier.size(24.dp)
+            )
+            Spacer(Modifier.width(12.dp))
+            Column {
+                Text(
+                    text = "Safety & AI Intelligence",
+                    color = TextPrimary,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = "Configure automated incident detection",
+                    color = TextSecondary,
+                    fontSize = 12.sp
+                )
+            }
+        }
 
         HorizontalDivider(color = DividerColor, thickness = 1.dp)
 
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(16.dp),
+                .padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            SafetyToggleItem("FACE DETECTION", faceDetection, onFaceDetectionChange)
-            SafetyToggleItem("HONK EVENT", honkEvent, onHonkEventChange)
-            SafetyToggleItem("HARD BRAKING", hardBraking, onHardBrakingChange)
-            SafetyToggleItem("ALARM", alarm, onAlarmChange)
+            SafetyToggleCard(
+                title = "FACE DETECTION",
+                description = "Detect and alert driver fatigue or distraction",
+                icon = Icons.Outlined.Face,
+                checked = faceDetection,
+                onCheckedChange = onFaceDetectionChange
+            )
+            SafetyToggleCard(
+                title = "HONK EVENT",
+                description = "Automatically record when unusual honking occurs",
+                icon = Icons.Outlined.VolumeUp,
+                checked = honkEvent,
+                onCheckedChange = onHonkEventChange
+            )
+            SafetyToggleCard(
+                title = "HARD BRAKING",
+                description = "Trigger emergency recording on sudden deceleration",
+                icon = Icons.Outlined.ReportProblem,
+                checked = hardBraking,
+                onCheckedChange = onHardBrakingChange
+            )
+            SafetyToggleCard(
+                title = "ALARM SYSTEM",
+                description = "Enable audible alerts for critical safety events",
+                icon = Icons.Outlined.NotificationsActive,
+                checked = alarm,
+                onCheckedChange = onAlarmChange
+            )
+            
+            Spacer(Modifier.weight(1f))
+            
+            // Subtle footer info
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(AccentTeal.copy(alpha = 0.05f))
+                    .padding(12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(Icons.Default.Info, contentDescription = null, tint = AccentTeal, modifier = Modifier.size(16.dp))
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    text = "Some features may require active internet connection for real-time cloud sync.",
+                    color = AccentTeal.copy(alpha = 0.8f),
+                    fontSize = 11.sp
+                )
+            }
         }
     }
 }
 
 @Composable
-fun SafetyToggleItem(label: String, checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
+private fun SafetyToggleCard(
+    title: String,
+    description: String,
+    icon: ImageVector,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
-            .background(SurfaceVariant)
-            .padding(horizontal = 16.dp, vertical = 10.dp),
+            .background(if (checked) SurfaceVariant else SurfaceVariant.copy(alpha = 0.5f))
+            .border(
+                width = 1.dp,
+                color = if (checked) AccentTeal.copy(alpha = 0.3f) else Color.Transparent,
+                shape = RoundedCornerShape(12.dp)
+            )
+            .clickable { onCheckedChange(!checked) }
+            .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Text(
-            text = label,
-            color = TextPrimary,
-            fontSize = 14.sp,
-            fontWeight = FontWeight.Medium
-        )
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.weight(1f)
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(CircleShape)
+                    .background(if (checked) AccentTeal.copy(alpha = 0.1f) else BackgroundDark.copy(alpha = 0.5f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = if (checked) AccentTeal else TextSecondary,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+            Spacer(Modifier.width(16.dp))
+            Column {
+                Text(
+                    text = title,
+                    color = if (checked) AccentTeal else TextPrimary,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = description,
+                    color = TextSecondary,
+                    fontSize = 11.sp,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+        }
+        
         Switch(
             checked = checked,
             onCheckedChange = onCheckedChange,
             colors = SwitchDefaults.colors(
-                checkedThumbColor = AccentTeal,
-                checkedTrackColor = AccentTeal.copy(alpha = 0.3f),
+                checkedThumbColor = Color.White,
+                checkedTrackColor = AccentTeal,
                 uncheckedThumbColor = TextSecondary,
-                uncheckedTrackColor = BackgroundDark
+                uncheckedTrackColor = BackgroundDark,
+                uncheckedBorderColor = DividerColor
             )
         )
     }
