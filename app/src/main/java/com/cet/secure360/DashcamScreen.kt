@@ -25,6 +25,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.cet.secure360.model.IncidentRecord
+import com.cet.secure360.model.dummyIncidentList
 
 // ─── Color Palette ───────────────────────────────────────────────────────────
 
@@ -44,23 +46,6 @@ enum class DashcamNavItem { Home, Car, Video, Settings, Cloud, Apps, Phone }
 
 enum class ClipTab { All, Parked, Driving, Shared }
 
-data class VideoClip(
-    val id: Int,
-    val title: String,
-    val timestamp: String,
-    val type: ClipTab,
-    val thumbnailColor: Color  // placeholder color instead of real image
-)
-
-private val sampleClips = listOf(
-    VideoClip(1, "Parked event",  "15:10", ClipTab.Parked,  Color(0xFF2C3340)),
-    VideoClip(2, "Driving clip",  "14:45", ClipTab.Driving, Color(0xFF243020)),
-    VideoClip(3, "Driving clip",  "14:45", ClipTab.Driving, Color(0xFF202830)),
-    VideoClip(4, "Driving clip",  "14:45", ClipTab.Driving, Color(0xFF252B20)),
-    VideoClip(5, "Driving clip",  "13:55", ClipTab.Driving, Color(0xFF202830)),
-    VideoClip(6, "Shared clip",   "12:30", ClipTab.Shared,  Color(0xFF2A2030)),
-)
-
 // ─── Main Screen ─────────────────────────────────────────────────────────────
 
 @Composable
@@ -75,9 +60,16 @@ fun DashcamScreen() {
     var hardBrakingEnabled by remember { mutableStateOf(false) }
     var alarmEnabled by remember { mutableStateOf(false) }
 
-    val filteredClips = remember(selectedTab) {
-        if (selectedTab == ClipTab.All) sampleClips
-        else sampleClips.filter { it.type == selectedTab }
+    val filteredIncidents = remember(selectedTab) {
+        if (selectedTab == ClipTab.All) dummyIncidentList
+        else dummyIncidentList.filter { incident ->
+            when (selectedTab) {
+                ClipTab.Parked -> incident.incidentType == 0
+                ClipTab.Driving -> incident.incidentType != 0
+                ClipTab.Shared -> false
+                else -> true
+            }
+        }
     }
 
     Row(
@@ -137,7 +129,7 @@ fun DashcamScreen() {
                         modifier = Modifier.weight(1.1f),
                         selectedTab = selectedTab,
                         onTabSelected = { selectedTab = it },
-                        clips = filteredClips
+                        incidents = filteredIncidents
                     )
                 }
             }
@@ -426,7 +418,7 @@ fun ClipListPanel(
     modifier: Modifier = Modifier,
     selectedTab: ClipTab,
     onTabSelected: (ClipTab) -> Unit,
-    clips: List<VideoClip>
+    incidents: List<IncidentRecord>
 ) {
     Column(
         modifier = modifier
@@ -459,8 +451,8 @@ fun ClipListPanel(
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(vertical = 6.dp)
         ) {
-            items(clips) { clip ->
-                ClipListItem(clip = clip)
+            items(incidents) { incident ->
+                ClipListItem(incident = incident)
                 Divider(
                     color = DividerColor.copy(alpha = 0.5f),
                     thickness = 0.5.dp,
@@ -507,7 +499,7 @@ private fun ClipTabItem(
 }
 
 @Composable
-private fun ClipListItem(clip: VideoClip) {
+private fun ClipListItem(incident: IncidentRecord) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -521,7 +513,7 @@ private fun ClipListItem(clip: VideoClip) {
             modifier = Modifier
                 .size(110.dp, 66.dp)
                 .clip(RoundedCornerShape(8.dp))
-                .background(clip.thumbnailColor),
+                .background(Color(0xFF2C3340)),
             contentAlignment = Alignment.BottomEnd
         ) {
             // Fake road perspective lines
@@ -563,7 +555,7 @@ private fun ClipListItem(clip: VideoClip) {
                     .padding(horizontal = 5.dp, vertical = 2.dp)
             ) {
                 Text(
-                    text = clip.timestamp,
+                    text = incident.time,
                     fontSize = 10.sp,
                     color = Color.White,
                     fontWeight = FontWeight.Medium
@@ -571,10 +563,10 @@ private fun ClipListItem(clip: VideoClip) {
             }
         }
 
-        // Label
-        Column {
+        // Label and Upload Status
+        Column(modifier = Modifier.weight(1f)) {
             Text(
-                text = "${clip.title} - ${clip.timestamp}",
+                text = "${incident.title} - ${incident.date}",
                 fontSize = 14.sp,
                 color = TextPrimary,
                 fontWeight = FontWeight.Medium,
@@ -590,21 +582,36 @@ private fun ClipListItem(clip: VideoClip) {
                     modifier = Modifier
                         .size(6.dp)
                         .clip(CircleShape)
-                        .background(
-                            when (clip.type) {
-                                ClipTab.Parked  -> Color(0xFFFFA726)
-                                ClipTab.Driving -> AccentTeal
-                                ClipTab.Shared  -> Color(0xFF7C4DFF)
-                                ClipTab.All     -> TextSecondary
-                            }
-                        )
+                        .background(if (incident.incidentType == 0) Color(0xFFFFA726) else AccentTeal)
                 )
                 Text(
-                    text = clip.type.name,
+                    text = "${incident.placeCityName}, ${incident.roadName}",
                     fontSize = 11.sp,
                     color = TextSecondary
                 )
             }
+        }
+
+        // Upload Status Percentage
+        Column(
+            horizontalAlignment = Alignment.End,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Text(
+                text = "${incident.fileUploadedStatus}%",
+                fontSize = 12.sp,
+                color = if (incident.fileUploadedStatus == 100) AccentTeal else Color(0xFFFFA726),
+                fontWeight = FontWeight.Bold
+            )
+            LinearProgressIndicator(
+                progress = { incident.fileUploadedStatus / 100f },
+                modifier = Modifier
+                    .width(40.dp)
+                    .height(4.dp)
+                    .clip(RoundedCornerShape(2.dp)),
+                color = if (incident.fileUploadedStatus == 100) AccentTeal else Color(0xFFFFA726),
+                trackColor = SurfaceVariant
+            )
         }
     }
 }
