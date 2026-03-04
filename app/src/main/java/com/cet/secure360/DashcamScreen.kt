@@ -274,7 +274,7 @@ fun RecordButton(isRecording: Boolean, onClick: () -> Unit) {
         Box(
             modifier = Modifier
                 .size(220.dp, 70.dp)
-                .clip(RoundedCornerShape(50.dp))
+                .clip(RoundedCornerShape(10.dp))
                 .background(AccentRed.copy(alpha = glowAlpha * 0.25f))
                 .blur(16.dp)
         )
@@ -284,7 +284,7 @@ fun RecordButton(isRecording: Boolean, onClick: () -> Unit) {
             modifier = Modifier
                 .height(56.dp)
                 .fillMaxWidth(0.75f),
-            shape = RoundedCornerShape(50.dp),
+            shape = RoundedCornerShape(10.dp),
             colors = ButtonDefaults.buttonColors(containerColor = AccentRed),
             elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp)
         ) {
