@@ -111,26 +111,36 @@ fun DashcamScreen() {
                     )
                 }
 
-                // ── Right Panel: Clip List OR Safety Settings ────────────────────────────────
-                if (currentNavItem == DashcamNavItem.Car) {
-                    SafetySettingsPanel(
-                        modifier = Modifier.weight(1.1f),
-                        faceDetection = faceDetectionEnabled,
-                        onFaceDetectionChange = { faceDetectionEnabled = it },
-                        honkEvent = honkEventEnabled,
-                        onHonkEventChange = { honkEventEnabled = it },
-                        hardBraking = hardBrakingEnabled,
-                        onHardBrakingChange = { hardBrakingEnabled = it },
-                        alarm = alarmEnabled,
-                        onAlarmChange = { alarmEnabled = it }
-                    )
-                } else {
-                    ClipListPanel(
-                        modifier = Modifier.weight(1.1f),
-                        selectedTab = selectedTab,
-                        onTabSelected = { selectedTab = it },
-                        incidents = filteredIncidents
-                    )
+                // ── Right Panel Content Switcher ────────────────────────────────
+                val rightPanelModifier = Modifier.weight(1.1f)
+                when (currentNavItem) {
+                    DashcamNavItem.Car -> {
+                        SafetySettingsPanel(
+                            modifier = rightPanelModifier,
+                            faceDetection = faceDetectionEnabled,
+                            onFaceDetectionChange = { faceDetectionEnabled = it },
+                            honkEvent = honkEventEnabled,
+                            onHonkEventChange = { honkEventEnabled = it },
+                            hardBraking = hardBrakingEnabled,
+                            onHardBrakingChange = { hardBrakingEnabled = it },
+                            alarm = alarmEnabled,
+                            onAlarmChange = { alarmEnabled = it }
+                        )
+                    }
+                    DashcamNavItem.Cloud -> {
+                        CloudUploadPanel(
+                            modifier = rightPanelModifier,
+                            incidents = dummyIncidentList
+                        )
+                    }
+                    else -> {
+                        ClipListPanel(
+                            modifier = rightPanelModifier,
+                            selectedTab = selectedTab,
+                            onTabSelected = { selectedTab = it },
+                            incidents = filteredIncidents
+                        )
+                    }
                 }
             }
         }
@@ -294,6 +304,73 @@ fun SafetyToggleItem(label: String, checked: Boolean, onCheckedChange: (Boolean)
                 uncheckedTrackColor = BackgroundDark
             )
         )
+    }
+}
+
+// ─── Cloud Upload Panel ──────────────────────────────────────────────────
+
+@Composable
+fun CloudUploadPanel(
+    modifier: Modifier = Modifier,
+    incidents: List<IncidentRecord>
+) {
+    val uploadingIncidents = remember(incidents) {
+        incidents.filter { it.fileUploadedStatus < 100 }
+    }
+
+    Column(
+        modifier = modifier
+            .fillMaxHeight()
+            .padding(15.dp)
+            .clip(RoundedCornerShape(16.dp))
+            .background(SurfaceDark)
+    ) {
+        Text(
+            text = "Cloud Upload Progress",
+            color = TextPrimary,
+            fontSize = 18.sp,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(16.dp)
+        )
+
+        Divider(color = DividerColor, thickness = 1.dp)
+
+        if (uploadingIncidents.isEmpty()) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Icon(
+                        imageVector = Icons.Default.CloudDone,
+                        contentDescription = null,
+                        tint = AccentTeal.copy(alpha = 0.5f),
+                        modifier = Modifier.size(64.dp)
+                    )
+                    Spacer(Modifier.height(12.dp))
+                    Text(
+                        text = "All Files are Uploaded",
+                        color = AccentTeal,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+            }
+        } else {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(vertical = 6.dp)
+            ) {
+                items(uploadingIncidents) { incident ->
+                    ClipListItem(incident = incident)
+                    Divider(
+                        color = DividerColor.copy(alpha = 0.5f),
+                        thickness = 0.5.dp,
+                        modifier = Modifier.padding(horizontal = 12.dp)
+                    )
+                }
+            }
+        }
     }
 }
 
