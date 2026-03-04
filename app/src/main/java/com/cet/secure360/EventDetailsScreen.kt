@@ -1,45 +1,38 @@
-package com.cet.secure.home
+package com.cet.secure360
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CarCrash
-import androidx.compose.material.icons.filled.LocationOn
-import androidx.compose.material.icons.filled.Speed
-import androidx.compose.material.icons.filled.VideoLibrary
-import androidx.compose.material3.Icon
-import androidx.compose.material3.Text
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.cet.secure360.R
 import com.cet.secure360.model.IncidentRecord
+
+// ─── Shared Color Palette (Matching DashcamScreen) ───────────────────────────
+
+private val SurfaceDark      = Color(0xFF22262E)
+private val SurfaceVariant   = Color(0xFF2A2F39)
+private val AccentTeal       = Color(0xFF00C9A7)
+private val AccentRed        = Color(0xFFE53935)
+private val TextPrimary      = Color(0xFFECEFF4)
+private val TextSecondary    = Color(0xFF8D93A1)
+private val DividerColor     = Color(0xFF2E333D)
 
 private fun getIncidentTypeText(incidentType: Int): String {
     return when (incidentType) {
@@ -57,225 +50,258 @@ private fun getIncidentTypeText(incidentType: Int): String {
 @Composable
 fun EventDetailsMainScreen(
     incident: IncidentRecord,
-    recentEvents: List<IncidentRecord>,
-    onItemClick: () -> Unit,
-    onPlayFootageClick: (String) -> Unit = {},
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onPlayFootageClick: (String) -> Unit = {}
 ) {
-
-    Box(
+    Column(
         modifier = modifier
             .fillMaxSize()
-            .background(Color(0xFF000000))
+            .clip(RoundedCornerShape(16.dp))
+            .background(SurfaceDark)
     ) {
-
-        Image(
-            painter = painterResource(R.drawable.map_full_view),
-            contentDescription = "Map View",
-            contentScale = ContentScale.Crop, // Ensures the map fills the dimensions properly
+        // Header
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(300.dp) // Set your desired height
-                .drawWithCache {
-                    // 1. Define the vertical gradient brush
-                    val gradient = Brush.verticalGradient(
-                        colors = listOf(Color.Transparent, Color.Black),
-                        startY = 0f, // Starts at the very top
-                        endY = size.height // Ends at the very bottom
-                    )
-
-                    onDrawWithContent {
-                        // 2. Draw the underlying image first
-                        drawContent()
-
-                        // 3. Draw the gradient rectangle over the image
-                        drawRect(brush = gradient)
-                    }
-                }
-        )
-
-
-
-        Box(
-            modifier = Modifier
-                .padding(top = 200.dp, start = 20.dp, end = 20.dp)
-                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            SelectedVideoThumbnail(
-                Modifier
-                    .align(Alignment.TopEnd)
+            Text(
+                text = "Event Analysis",
+                color = TextPrimary,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold
             )
-
-            Column(
+            
+            Box(
                 modifier = Modifier
-                    .align(Alignment.BottomStart)
+                    .clip(RoundedCornerShape(4.dp))
+                    .background(if (incident.incidentType == 0) Color(0xFFFFA726).copy(alpha = 0.2f) else AccentTeal.copy(alpha = 0.2f))
+                    .padding(horizontal = 8.dp, vertical = 4.dp)
             ) {
-
                 Text(
-                    incident.placeCityName,
-                    color = Color.White,
-                    fontSize = 26.sp,
-                    fontWeight = FontWeight.Bold,
-                    fontFamily = FontFamily.Serif
-                )
-                Text(
-                    incident.time,
-                    color = Color.White,
-                    fontSize = 20.sp,
-                    fontFamily = FontFamily.Serif,
-                    modifier = Modifier
-                        .padding(top = 10.dp)
+                    text = getIncidentTypeText(incident.incidentType).uppercase(),
+                    color = if (incident.incidentType == 0) Color(0xFFFFA726) else AccentTeal,
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Bold
                 )
             }
-
         }
 
+        HorizontalDivider(color = DividerColor, thickness = 1.dp)
 
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(top = 350.dp, start = 20.dp, end = 20.dp)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-
+            // Upper Section: Map and Info Cards
             Row(
                 modifier = Modifier
-                    .fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-
-                Icon(
-                    imageVector = Icons.Default.LocationOn,
-                    contentDescription = "",
-                    tint = Color.Red,
-                    modifier = Modifier
-                        .size(40.dp)
-                )
-
-                Text(
-                    incident.roadName,
-                    color = Color.Gray,
-                    fontSize = 20.sp,
-                    fontFamily = FontFamily.Serif,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                )
-
-            }
-
-            Row(
-                modifier = Modifier
-                    .padding(top = 10.dp)
-                    .fillMaxWidth(),
-            ) {
-
-                IconText(
-                    getIncidentTypeText(incident.incidentType),
-                    Icons.Default.CarCrash,
-                    Modifier.weight(1f)
-                )
-                IconText(
-                    "${incident.vehicleSpeed.toInt()} KM/H",
-                    Icons.Default.Speed,
-                    Modifier.weight(1f)
-                )
-
-            }
-
-            Row(
-                modifier = Modifier
-                    .padding(top = 40.dp)
                     .fillMaxWidth()
-                    .height(60.dp)
-                    .clip(RoundedCornerShape(10.dp))
-                    .background(Color(0xFFE91E63))
-                    .clickable { onPlayFootageClick(incident.filepath) },
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically
+                    .weight(1.3f),
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-
-                Icon(
-                    imageVector = Icons.Default.VideoLibrary,
-                    contentDescription = "",
-                    tint = Color.White,
+                // Interactive Map Placeholder
+                Box(
                     modifier = Modifier
-                        .size(40.dp)
-                        .padding(end = 10.dp)
-                )
-                Text(
-                    text = "Play Footage",
-                    color = Color.White,
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold
-                )
+                        .weight(1.6f)
+                        .fillMaxHeight()
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(SurfaceVariant)
+                ) {
+                    Image(
+                        painter = painterResource(R.drawable.map_full_view),
+                        contentDescription = "Map View",
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                    
+                    // Bottom shadow for text visibility
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(
+                                Brush.verticalGradient(
+                                    colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.6f)),
+                                    startY = 200f
+                                )
+                            )
+                    )
+
+                    Column(
+                        modifier = Modifier
+                            .align(Alignment.BottomStart)
+                            .padding(12.dp)
+                    ) {
+                        Text(
+                            text = incident.roadName,
+                            color = Color.White,
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = "${incident.placeCityName} • ${incident.date}",
+                            color = Color.White.copy(alpha = 0.7f),
+                            fontSize = 11.sp
+                        )
+                    }
+                }
+
+                // Vital Stats Column
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    StatCard(
+                        label = "Velocity",
+                        value = "${incident.vehicleSpeed.toInt()} km/h",
+                        icon = Icons.Default.Speed,
+                        color = if (incident.vehicleSpeed > 80) AccentRed else AccentTeal
+                    )
+                    StatCard(
+                        label = "Timeline",
+                        value = incident.time,
+                        icon = Icons.Default.Schedule,
+                        color = TextSecondary
+                    )
+                    StatCard(
+                        label = "Transmission",
+                        value = "Gear D${incident.gear}",
+                        icon = Icons.Default.Settings,
+                        color = TextSecondary
+                    )
+                }
             }
 
+            // Lower Section: Footage and Logs
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f),
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                // Video Playback Action
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(SurfaceVariant)
+                        .clickable { onPlayFootageClick(incident.filepath) },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Image(
+                        painter = painterResource(R.drawable.thumbnail),
+                        contentDescription = "Footage Preview",
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                    
+                    // Play Button Overlay
+                    Box(
+                        modifier = Modifier
+                            .size(56.dp)
+                            .clip(CircleShape)
+                            .background(Color.Black.copy(alpha = 0.5f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.PlayArrow,
+                            contentDescription = "Play",
+                            tint = Color.White,
+                            modifier = Modifier.size(32.dp)
+                        )
+                    }
+                    
+                    Text(
+                        text = "REVIEW FOOTAGE",
+                        color = Color.White,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Black,
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .padding(bottom = 12.dp)
+                    )
+                }
 
+                // Data Logs
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(SurfaceVariant.copy(alpha = 0.5f))
+                        .padding(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = "Telemetry Data",
+                        color = TextPrimary,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    
+                    DataRow("Latitude", incident.locationLat.toString())
+                    DataRow("Longitude", incident.locationLong.toString())
+                    DataRow("Upload status", "${incident.fileUploadedStatus}%")
+                    
+                    Spacer(Modifier.weight(1f))
+                    
+                    Button(
+                        onClick = { /* Share Evidence */ },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(40.dp),
+                        shape = RoundedCornerShape(8.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = SurfaceVariant),
+                        elevation = ButtonDefaults.buttonElevation(0.dp)
+                    ) {
+                        Icon(Icons.Default.Share, contentDescription = null, modifier = Modifier.size(14.dp))
+                        Spacer(Modifier.width(8.dp))
+                        Text("Export Log", fontSize = 12.sp)
+                    }
+                }
+            }
         }
-
     }
-
-}
-
-//@Preview(showBackground = true)
-//@Composable
-//fun EventDetailsMainScreenPreview() {
-//    EventDetailsMainScreen(
-//        incident = dummyIncidentList.first(),
-//        recentEvents = dummyIncidentList,
-//        onItemClick = {}
-//    )
-//}
-
-@Composable
-fun SelectedVideoThumbnail(modifier: Modifier = Modifier) {
-
-    Column(
-        modifier = modifier
-            .size(100.dp)
-            .clip(RoundedCornerShape(5.dp))
-            .background(Color(0xFFE91E63))
-            .padding(5.dp)
-            .clip(RoundedCornerShape(5.dp))
-            .background(Color.Black)
-    ) {
-        Image(
-            painter = painterResource(R.drawable.thumbnail),
-            contentDescription = "",
-            contentScale = ContentScale.Crop
-        )
-
-    }
-
 }
 
 @Composable
-fun IconText(
-    text: String,
-    icon: ImageVector,
-    modifier: Modifier = Modifier
-) {
-
+private fun StatCard(label: String, value: String, icon: ImageVector, color: Color) {
     Row(
-        modifier = modifier,
-        verticalAlignment = Alignment.CenterVertically
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(10.dp))
+            .background(SurfaceVariant)
+            .padding(12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = "",
-            tint = Color.White,
+        Box(
             modifier = Modifier
-                .size(30.dp)
-        )
-
-        Text(
-            text,
-            color = Color.Gray,
-            fontSize = 20.sp,
-            fontFamily = FontFamily.Serif,
-            modifier = Modifier
-                .padding(start = 10.dp)
-                .fillMaxWidth()
-        )
+                .size(32.dp)
+                .clip(CircleShape)
+                .background(color.copy(alpha = 0.1f)),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(icon, contentDescription = null, tint = color, modifier = Modifier.size(16.dp))
+        }
+        Column {
+            Text(label, color = TextSecondary, fontSize = 9.sp, fontWeight = FontWeight.Medium)
+            Text(value, color = TextPrimary, fontSize = 14.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        }
     }
+}
 
+@Composable
+private fun DataRow(label: String, value: String) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(label, color = TextSecondary, fontSize = 11.sp)
+        Text(value, color = TextPrimary, fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+    }
 }

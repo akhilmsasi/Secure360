@@ -25,7 +25,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.cet.secure.home.EventDetailsMainScreen
 import com.cet.secure360.model.IncidentRecord
 import com.cet.secure360.model.dummyIncidentList
 
@@ -121,9 +120,7 @@ fun DashcamScreen() {
                     ) {
                         selectedIncident?.let {
                             EventDetailsMainScreen(
-                                incident = it,
-                                recentEvents = dummyIncidentList,
-                                onItemClick = {}
+                                incident = it
                             )
                         } ?: Box(
                             modifier = Modifier.fillMaxSize(),
@@ -298,7 +295,7 @@ fun SafetySettingsPanel(
             modifier = Modifier.padding(16.dp)
         )
 
-        Divider(color = DividerColor, thickness = 1.dp)
+        HorizontalDivider(color = DividerColor, thickness = 1.dp)
 
         Column(
             modifier = Modifier
@@ -370,7 +367,7 @@ fun CloudUploadPanel(
             modifier = Modifier.padding(16.dp)
         )
 
-        Divider(color = DividerColor, thickness = 1.dp)
+        HorizontalDivider(color = DividerColor, thickness = 1.dp)
 
         if (uploadingIncidents.isEmpty()) {
             Box(
@@ -559,7 +556,7 @@ fun ClipListPanel(
             }
         }
 
-        Divider(color = DividerColor, thickness = 1.dp)
+        HorizontalDivider(color = DividerColor, thickness = 1.dp)
 
         // Clip List or Empty State
         if (incidents.isEmpty()) {
