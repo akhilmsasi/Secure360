@@ -25,6 +25,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.cet.secure.home.EventDetailsMainScreen
 import com.cet.secure360.model.IncidentRecord
 import com.cet.secure360.model.dummyIncidentList
 
@@ -53,6 +54,9 @@ fun DashcamScreen() {
     var currentNavItem by remember { mutableStateOf(DashcamNavItem.Home) }
     var selectedTab by remember { mutableStateOf(ClipTab.All) }
     var isRecording by remember { mutableStateOf(false) }
+
+    // Selected incident for Video library view
+    var selectedIncident by remember { mutableStateOf<IncidentRecord?>(dummyIncidentList.firstOrNull()) }
 
     // Safety Settings States
     var faceDetectionEnabled by remember { mutableStateOf(false) }
@@ -97,49 +101,82 @@ fun DashcamScreen() {
                     .weight(1f),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                // ── Left Panel: Car Preview + Record ─────────────────────
-                Column(
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxHeight(),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    CarPreviewPanel(modifier = Modifier.weight(1f))
-                    RecordButton(
-                        isRecording = isRecording,
-                        onClick = { isRecording = !isRecording }
+                if (currentNavItem == DashcamNavItem.Video) {
+                    // ── Left Panel: Video List ─────────────────────
+                    ClipListPanel(
+                        modifier = Modifier.weight(1f),
+                        selectedTab = selectedTab,
+                        onTabSelected = { selectedTab = it },
+                        incidents = filteredIncidents,
+                        onIncidentClick = { selectedIncident = it }
                     )
-                }
 
-                // ── Right Panel Content Switcher ────────────────────────────────
-                val rightPanelModifier = Modifier.weight(1.1f)
-                when (currentNavItem) {
-                    DashcamNavItem.Car -> {
-                        SafetySettingsPanel(
-                            modifier = rightPanelModifier,
-                            faceDetection = faceDetectionEnabled,
-                            onFaceDetectionChange = { faceDetectionEnabled = it },
-                            honkEvent = honkEventEnabled,
-                            onHonkEventChange = { honkEventEnabled = it },
-                            hardBraking = hardBrakingEnabled,
-                            onHardBrakingChange = { hardBrakingEnabled = it },
-                            alarm = alarmEnabled,
-                            onAlarmChange = { alarmEnabled = it }
+                    // ── Right Panel: Event Details ────────────────────────────────
+                    Box(
+                        modifier = Modifier
+                            .weight(1.5f)
+                            .fillMaxHeight()
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(SurfaceDark)
+                    ) {
+                        selectedIncident?.let {
+                            EventDetailsMainScreen(
+                                incident = it,
+                                recentEvents = dummyIncidentList,
+                                onItemClick = {}
+                            )
+                        } ?: Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text("Select a video to view details", color = TextSecondary)
+                        }
+                    }
+                } else {
+                    // ── Left Panel: Car Preview + Record ─────────────────────
+                    Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxHeight(),
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        CarPreviewPanel(modifier = Modifier.weight(1f))
+                        RecordButton(
+                            isRecording = isRecording,
+                            onClick = { isRecording = !isRecording }
                         )
                     }
-                    DashcamNavItem.Cloud -> {
-                        CloudUploadPanel(
-                            modifier = rightPanelModifier,
-                            incidents = dummyIncidentList
-                        )
-                    }
-                    else -> {
-                        ClipListPanel(
-                            modifier = rightPanelModifier,
-                            selectedTab = selectedTab,
-                            onTabSelected = { selectedTab = it },
-                            incidents = filteredIncidents
-                        )
+
+                    // ── Right Panel Content Switcher ────────────────────────────────
+                    val rightPanelModifier = Modifier.weight(1.1f)
+                    when (currentNavItem) {
+                        DashcamNavItem.Car -> {
+                            SafetySettingsPanel(
+                                modifier = rightPanelModifier,
+                                faceDetection = faceDetectionEnabled,
+                                onFaceDetectionChange = { faceDetectionEnabled = it },
+                                honkEvent = honkEventEnabled,
+                                onHonkEventChange = { honkEventEnabled = it },
+                                hardBraking = hardBrakingEnabled,
+                                onHardBrakingChange = { hardBrakingEnabled = it },
+                                alarm = alarmEnabled,
+                                onAlarmChange = { alarmEnabled = it }
+                            )
+                        }
+                        DashcamNavItem.Cloud -> {
+                            CloudUploadPanel(
+                                modifier = rightPanelModifier,
+                                incidents = dummyIncidentList
+                            )
+                        }
+                        else -> {
+                            ClipListPanel(
+                                modifier = rightPanelModifier,
+                                selectedTab = selectedTab,
+                                onTabSelected = { selectedTab = it },
+                                incidents = filteredIncidents
+                            )
+                        }
                     }
                 }
             }
@@ -495,7 +532,8 @@ fun ClipListPanel(
     modifier: Modifier = Modifier,
     selectedTab: ClipTab,
     onTabSelected: (ClipTab) -> Unit,
-    incidents: List<IncidentRecord>
+    incidents: List<IncidentRecord>,
+    onIncidentClick: (IncidentRecord) -> Unit = {}
 ) {
     Column(
         modifier = modifier
@@ -551,7 +589,10 @@ fun ClipListPanel(
                 contentPadding = PaddingValues(vertical = 6.dp)
             ) {
                 items(incidents) { incident ->
-                    ClipListItem(incident = incident)
+                    ClipListItem(
+                        incident = incident,
+                        onClick = { onIncidentClick(incident) }
+                    )
                     Divider(
                         color = DividerColor.copy(alpha = 0.5f),
                         thickness = 0.5.dp,
@@ -599,11 +640,14 @@ private fun ClipTabItem(
 }
 
 @Composable
-private fun ClipListItem(incident: IncidentRecord) {
+private fun ClipListItem(
+    incident: IncidentRecord,
+    onClick: () -> Unit = {}
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { }
+            .clickable { onClick() }
             .padding(horizontal = 12.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp)
