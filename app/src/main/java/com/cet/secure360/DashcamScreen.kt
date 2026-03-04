@@ -40,6 +40,8 @@ private val DividerColor     = Color(0xFF2E333D)
 
 // ─── Data Models ─────────────────────────────────────────────────────────────
 
+enum class DashcamNavItem { Home, Car, Video, Settings, Cloud, Apps, Phone }
+
 enum class ClipTab { All, Parked, Driving, Shared }
 
 data class VideoClip(
@@ -63,8 +65,15 @@ private val sampleClips = listOf(
 
 @Composable
 fun DashcamScreen() {
+    var currentNavItem by remember { mutableStateOf(DashcamNavItem.Home) }
     var selectedTab by remember { mutableStateOf(ClipTab.All) }
     var isRecording by remember { mutableStateOf(false) }
+
+    // Safety Settings States
+    var faceDetectionEnabled by remember { mutableStateOf(false) }
+    var honkEventEnabled by remember { mutableStateOf(false) }
+    var hardBrakingEnabled by remember { mutableStateOf(false) }
+    var alarmEnabled by remember { mutableStateOf(false) }
 
     val filteredClips = remember(selectedTab) {
         if (selectedTab == ClipTab.All) sampleClips
@@ -77,7 +86,10 @@ fun DashcamScreen() {
             .background(BackgroundDark)
     ) {
         // ── Left Sidebar ──────────────────────────────────────────────────
-        SideNavigationBar()
+        SideNavigationBar(
+            selectedItem = currentNavItem,
+            onItemClick = { currentNavItem = it }
+        )
 
         // ── Main Content ──────────────────────────────────────────────────
         Column(
@@ -107,13 +119,27 @@ fun DashcamScreen() {
                     )
                 }
 
-                // ── Right Panel: Clip List ────────────────────────────────
-                ClipListPanel(
-                    modifier = Modifier.weight(1.1f),
-                    selectedTab = selectedTab,
-                    onTabSelected = { selectedTab = it },
-                    clips = filteredClips
-                )
+                // ── Right Panel: Clip List OR Safety Settings ────────────────────────────────
+                if (currentNavItem == DashcamNavItem.Car) {
+                    SafetySettingsPanel(
+                        modifier = Modifier.weight(1.1f),
+                        faceDetection = faceDetectionEnabled,
+                        onFaceDetectionChange = { faceDetectionEnabled = it },
+                        honkEvent = honkEventEnabled,
+                        onHonkEventChange = { honkEventEnabled = it },
+                        hardBraking = hardBrakingEnabled,
+                        onHardBrakingChange = { hardBrakingEnabled = it },
+                        alarm = alarmEnabled,
+                        onAlarmChange = { alarmEnabled = it }
+                    )
+                } else {
+                    ClipListPanel(
+                        modifier = Modifier.weight(1.1f),
+                        selectedTab = selectedTab,
+                        onTabSelected = { selectedTab = it },
+                        clips = filteredClips
+                    )
+                }
             }
         }
     }
@@ -122,7 +148,10 @@ fun DashcamScreen() {
 // ─── Side Navigation Bar ─────────────────────────────────────────────────────
 
 @Composable
-fun SideNavigationBar() {
+fun SideNavigationBar(
+    selectedItem: DashcamNavItem,
+    onItemClick: (DashcamNavItem) -> Unit
+) {
     Column(
         modifier = Modifier
             .fillMaxHeight()
@@ -132,16 +161,20 @@ fun SideNavigationBar() {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        // Top: Home
-        NavIcon(icon = Icons.Default.Home, isSelected = true, tint = AccentTeal)
+        // Navigation Icons
+        NavIcon(
+            icon = Icons.Default.Home,
+            isSelected = selectedItem == DashcamNavItem.Home,
+            onClick = { onItemClick(DashcamNavItem.Home) }
+        )
         Spacer(Modifier.height(4.dp))
 
-        NavIcon(icon = Icons.Default.DirectionsCar, isSelected = false)
-        NavIcon(icon = Icons.Default.VideoLibrary, isSelected = false)
-        NavIcon(icon = Icons.Default.VideoSettings, isSelected = false)
-        NavIcon(icon = Icons.Default.CloudUpload, isSelected = false)
-        NavIcon(icon = Icons.Default.Apps, isSelected = false)
-        NavIcon(icon = Icons.Default.Phone, isSelected = false)
+        NavIcon(icon = Icons.Default.DirectionsCar, isSelected = selectedItem == DashcamNavItem.Car, onClick = { onItemClick(DashcamNavItem.Car) })
+        NavIcon(icon = Icons.Default.VideoLibrary, isSelected = selectedItem == DashcamNavItem.Video, onClick = { onItemClick(DashcamNavItem.Video) })
+        NavIcon(icon = Icons.Default.VideoSettings, isSelected = selectedItem == DashcamNavItem.Settings, onClick = { onItemClick(DashcamNavItem.Settings) })
+        NavIcon(icon = Icons.Default.CloudUpload, isSelected = selectedItem == DashcamNavItem.Cloud, onClick = { onItemClick(DashcamNavItem.Cloud) })
+        NavIcon(icon = Icons.Default.Apps, isSelected = selectedItem == DashcamNavItem.Apps, onClick = { onItemClick(DashcamNavItem.Apps) })
+        NavIcon(icon = Icons.Default.Phone, isSelected = selectedItem == DashcamNavItem.Phone, onClick = { onItemClick(DashcamNavItem.Phone) })
 
         Spacer(Modifier.weight(1f))
 
@@ -161,7 +194,7 @@ fun SideNavigationBar() {
             )
         }
 
-        // Teal accent strip on left edge
+        // Selected indicator
         Box(
             modifier = Modifier
                 .width(3.dp)
@@ -177,13 +210,15 @@ fun SideNavigationBar() {
 private fun NavIcon(
     icon: androidx.compose.ui.graphics.vector.ImageVector,
     isSelected: Boolean,
-    tint: Color = if (isSelected) TextPrimary else TextSecondary
+    onClick: () -> Unit,
+    tint: Color = if (isSelected) AccentTeal else TextSecondary
 ) {
     Box(
         modifier = Modifier
             .size(40.dp)
             .clip(RoundedCornerShape(10.dp))
-            .background(if (isSelected) SurfaceVariant else Color.Transparent),
+            .background(if (isSelected) SurfaceVariant else Color.Transparent)
+            .clickable { onClick() },
         contentAlignment = Alignment.Center
     ) {
         Icon(
@@ -191,6 +226,81 @@ private fun NavIcon(
             contentDescription = null,
             tint = tint,
             modifier = Modifier.size(20.dp)
+        )
+    }
+}
+
+// ─── Safety Settings Panel ──────────────────────────────────────────────────
+
+@Composable
+fun SafetySettingsPanel(
+    modifier: Modifier = Modifier,
+    faceDetection: Boolean,
+    onFaceDetectionChange: (Boolean) -> Unit,
+    honkEvent: Boolean,
+    onHonkEventChange: (Boolean) -> Unit,
+    hardBraking: Boolean,
+    onHardBrakingChange: (Boolean) -> Unit,
+    alarm: Boolean,
+    onAlarmChange: (Boolean) -> Unit
+) {
+    Column(
+        modifier = modifier
+            .fillMaxHeight()
+            .padding(15.dp)
+            .clip(RoundedCornerShape(16.dp))
+            .background(SurfaceDark)
+    ) {
+        Text(
+            text = "Safety & AI Settings",
+            color = TextPrimary,
+            fontSize = 18.sp,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(16.dp)
+        )
+
+        Divider(color = DividerColor, thickness = 1.dp)
+
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            SafetyToggleItem("FACE DETECTION", faceDetection, onFaceDetectionChange)
+            SafetyToggleItem("HONK EVENT", honkEvent, onHonkEventChange)
+            SafetyToggleItem("HARD BRAKING", hardBraking, onHardBrakingChange)
+            SafetyToggleItem("ALARM", alarm, onAlarmChange)
+        }
+    }
+}
+
+@Composable
+fun SafetyToggleItem(label: String, checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(SurfaceVariant)
+            .padding(horizontal = 16.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(
+            text = label,
+            color = TextPrimary,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.Medium
+        )
+        Switch(
+            checked = checked,
+            onCheckedChange = onCheckedChange,
+            colors = SwitchDefaults.colors(
+                checkedThumbColor = AccentTeal,
+                checkedTrackColor = AccentTeal.copy(alpha = 0.3f),
+                uncheckedThumbColor = TextSecondary,
+                uncheckedTrackColor = BackgroundDark
+            )
         )
     }
 }
