@@ -431,6 +431,12 @@ fun CloudUploadPanel(modifier: Modifier = Modifier, incidents: List<IncidentReco
 fun CarPreviewPanel(modifier: Modifier = Modifier) {
     Box(modifier = modifier.fillMaxWidth().padding(15.dp).clip(RoundedCornerShape(16.dp)).background(SurfaceDark).border(1.dp, Color.White.copy(alpha = 0.05f), RoundedCornerShape(16.dp)), contentAlignment = Alignment.Center) {
         Box(modifier = Modifier.size(260.dp, 80.dp).align(Alignment.BottomCenter).offset(y = (-20).dp).background(Brush.radialGradient(colors = listOf(AccentTeal.copy(alpha = 0.2f), Color.Transparent))).blur(30.dp))
+        Box(
+            modifier = Modifier
+                .size(500.dp)
+                .background(Brush.radialGradient(listOf(AccentTeal.copy(alpha = 0.15f), Color.Transparent)))
+                .blur(60.dp)
+        )
         Column(modifier = Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
             Image(painter = painterResource(R.drawable.car_image), null, contentScale = ContentScale.FillWidth, modifier = Modifier.padding(bottom = 10.dp))
         }
