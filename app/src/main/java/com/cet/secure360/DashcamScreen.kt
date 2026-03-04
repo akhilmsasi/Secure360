@@ -60,6 +60,21 @@ fun DashcamScreen() {
     var selectedTab by remember { mutableStateOf(ClipTab.All) }
     var isRecording by remember { mutableStateOf(false) }
 
+    // Hoisted timer state to survive composition changes (screen switching)
+    var recordingSeconds by remember { mutableStateOf(30) }
+    val maxSeconds = 60
+
+    LaunchedEffect(isRecording) {
+        if (isRecording) {
+            while (recordingSeconds < maxSeconds) {
+                delay(1000)
+                recordingSeconds++
+            }
+        } else {
+            recordingSeconds = 30
+        }
+    }
+
     // Selected incident for Video library view
     var selectedIncident by remember { mutableStateOf<IncidentRecord?>(dummyIncidentList.firstOrNull()) }
 
@@ -147,6 +162,7 @@ fun DashcamScreen() {
                         CarPreviewPanel(modifier = Modifier.weight(1f))
                         RecordButton(
                             isRecording = isRecording,
+                            seconds = recordingSeconds,
                             onClick = { isRecording = !isRecording }
                         )
                     }
@@ -694,21 +710,8 @@ private fun CarStatChip(
 // ─── Record Button ───────────────────────────────────────────────────────────
 
 @Composable
-fun RecordButton(isRecording: Boolean, onClick: () -> Unit) {
-    var seconds by remember { mutableStateOf(30) }
+fun RecordButton(isRecording: Boolean, seconds: Int, onClick: () -> Unit) {
     val maxSeconds = 60
-
-    LaunchedEffect(isRecording) {
-        if (isRecording) {
-            seconds = 30
-            while (seconds < maxSeconds) {
-                delay(1000)
-                seconds++
-            }
-        } else {
-            seconds = 30
-        }
-    }
 
     val animatedProgress by animateFloatAsState(
         targetValue = seconds.toFloat() / maxSeconds,
