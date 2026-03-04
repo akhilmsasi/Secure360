@@ -124,6 +124,7 @@ fun DashcamScreen() {
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 if (currentNavItem == DashcamNavItem.Video) {
+                    // ── Left Panel: Video List ─────────────────────
                     ClipListPanel(
                         modifier = Modifier.weight(1f),
                         selectedTab = selectedTab,
@@ -133,6 +134,7 @@ fun DashcamScreen() {
                         onIncidentClick = { selectedIncident = it }
                     )
 
+                    // ── Right Panel: Event Details ────────────────────────────────
                     Box(
                         modifier = Modifier
                             .weight(1.5f)
@@ -141,10 +143,18 @@ fun DashcamScreen() {
                             .background(SurfaceDark)
                     ) {
                         selectedIncident?.let {
-                            EventDetailsMainScreen(incident = it)
+                            EventDetailsMainScreen(
+                                incident = it
+                            )
+                        } ?: Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text("Select a video to view details", color = TextSecondary)
                         }
                     }
                 } else {
+                    // ── Left Panel: Car Preview + Record ─────────────────────
                     Column(
                         modifier = Modifier
                             .weight(1f)
@@ -159,6 +169,7 @@ fun DashcamScreen() {
                         )
                     }
 
+                    // ── Right Panel Content Switcher ────────────────────────────────
                     val rightPanelModifier = Modifier.weight(1.1f)
                     when (currentNavItem) {
                         DashcamNavItem.Car -> {
@@ -193,11 +204,13 @@ fun DashcamScreen() {
                             )
                         }
                         else -> {
+                            // Home
                             ClipListPanel(
                                 modifier = rightPanelModifier,
                                 selectedTab = selectedTab,
                                 onTabSelected = { selectedTab = it },
                                 incidents = filteredIncidents,
+                                selectedIncident = null, // No selection bar on Home
                                 onIncidentClick = { incident ->
                                     selectedIncident = incident
                                     currentNavItem = DashcamNavItem.Video
@@ -431,12 +444,6 @@ fun CloudUploadPanel(modifier: Modifier = Modifier, incidents: List<IncidentReco
 fun CarPreviewPanel(modifier: Modifier = Modifier) {
     Box(modifier = modifier.fillMaxWidth().padding(15.dp).clip(RoundedCornerShape(16.dp)).background(SurfaceDark).border(1.dp, Color.White.copy(alpha = 0.05f), RoundedCornerShape(16.dp)), contentAlignment = Alignment.Center) {
         Box(modifier = Modifier.size(260.dp, 80.dp).align(Alignment.BottomCenter).offset(y = (-20).dp).background(Brush.radialGradient(colors = listOf(AccentTeal.copy(alpha = 0.2f), Color.Transparent))).blur(30.dp))
-        Box(
-            modifier = Modifier
-                .size(500.dp)
-                .background(Brush.radialGradient(listOf(AccentTeal.copy(alpha = 0.15f), Color.Transparent)))
-                .blur(60.dp)
-        )
         Column(modifier = Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
             Image(painter = painterResource(R.drawable.car_image), null, contentScale = ContentScale.FillWidth, modifier = Modifier.padding(bottom = 10.dp))
         }
@@ -583,6 +590,3 @@ private fun ClipListItem(incident: IncidentRecord, isSelected: Boolean = false, 
 @Preview(showBackground = true, widthDp = 900, heightDp = 520, backgroundColor = 0xFF1A1D22)
 @Composable
 fun DashcamScreenPreview() { MaterialTheme { DashcamScreen() } }
-
-@Composable
-fun EventDetailsMainScreen(incident: IncidentRecord) { Text("Event Details for ${incident.id}", color = Color.White) }
