@@ -1,0 +1,49 @@
+{
+  "project_info": {
+    "project_number": "170431353623",
+    "firebase_url": "https://fir-7211b-default-rtdb.firebaseio.com",
+    "project_id": "fir-7211b",
+    "storage_bucket": "fir-7211b.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:170431353623:android:bf4a9b2fca8f38745d5d52",
+        "android_client_info": {
+          "package_name": "com.cet.secure"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA1CTpdkdT0BFUIjpYi-CUQEQb7jOqyf40"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:170431353623:android:af37a5caeb54f8835d5d52",
+        "android_client_info": {
+          "package_name": "com.cet.secure360"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA1CTpdkdT0BFUIjpYi-CUQEQb7jOqyf40"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,0 +1,515 @@
+package com.cet.secure360
+
+import androidx.compose.animation.core.*
+import androidx.compose.foundation.*
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.graphics.*
+import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+
+// ─── Color Palette ───────────────────────────────────────────────────────────
+
+private val BackgroundDark   = Color(0xFF1A1D22)
+private val SurfaceDark      = Color(0xFF22262E)
+private val SurfaceVariant   = Color(0xFF2A2F39)
+private val AccentTeal       = Color(0xFF00C9A7)
+private val AccentRed        = Color(0xFFE53935)
+private val TextPrimary      = Color(0xFFECEFF4)
+private val TextSecondary    = Color(0xFF8D93A1)
+private val SidebarBg        = Color(0xFF13161B)
+private val DividerColor     = Color(0xFF2E333D)
+
+// ─── Data Models ─────────────────────────────────────────────────────────────
+
+enum class ClipTab { All, Parked, Driving, Shared }
+
+data class VideoClip(
+    val id: Int,
+    val title: String,
+    val timestamp: String,
+    val type: ClipTab,
+    val thumbnailColor: Color  // placeholder color instead of real image
+)
+
+private val sampleClips = listOf(
+    VideoClip(1, "Parked event",  "15:10", ClipTab.Parked,  Color(0xFF2C3340)),
+    VideoClip(2, "Driving clip",  "14:45", ClipTab.Driving, Color(0xFF243020)),
+    VideoClip(3, "Driving clip",  "14:45", ClipTab.Driving, Color(0xFF202830)),
+    VideoClip(4, "Driving clip",  "14:45", ClipTab.Driving, Color(0xFF252B20)),
+    VideoClip(5, "Driving clip",  "13:55", ClipTab.Driving, Color(0xFF202830)),
+    VideoClip(6, "Shared clip",   "12:30", ClipTab.Shared,  Color(0xFF2A2030)),
+)
+
+// ─── Main Screen ─────────────────────────────────────────────────────────────
+
+@Composable
+fun DashcamScreen() {
+    var selectedTab by remember { mutableStateOf(ClipTab.All) }
+    var isRecording by remember { mutableStateOf(false) }
+
+    val filteredClips = remember(selectedTab) {
+        if (selectedTab == ClipTab.All) sampleClips
+        else sampleClips.filter { it.type == selectedTab }
+    }
+
+    Row(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(BackgroundDark)
+    ) {
+        // ── Left Sidebar ──────────────────────────────────────────────────
+        SideNavigationBar()
+
+        // ── Main Content ──────────────────────────────────────────────────
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxHeight()
+                .padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                // ── Left Panel: Car Preview + Record ─────────────────────
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight(),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    CarPreviewPanel(modifier = Modifier.weight(1f))
+                    RecordButton(
+                        isRecording = isRecording,
+                        onClick = { isRecording = !isRecording }
+                    )
+                }
+
+                // ── Right Panel: Clip List ────────────────────────────────
+                ClipListPanel(
+                    modifier = Modifier.weight(1.1f),
+                    selectedTab = selectedTab,
+                    onTabSelected = { selectedTab = it },
+                    clips = filteredClips
+                )
+            }
+        }
+    }
+}
+
+// ─── Side Navigation Bar ─────────────────────────────────────────────────────
+
+@Composable
+fun SideNavigationBar() {
+    Column(
+        modifier = Modifier
+            .fillMaxHeight()
+            .width(56.dp)
+            .background(SidebarBg)
+            .padding(vertical = 16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        // Top: Home
+        NavIcon(icon = Icons.Default.Home, isSelected = true, tint = AccentTeal)
+        Spacer(Modifier.height(4.dp))
+
+        NavIcon(icon = Icons.Default.DirectionsCar, isSelected = false)
+        NavIcon(icon = Icons.Default.VideoLibrary, isSelected = false)
+        NavIcon(icon = Icons.Default.VideoSettings, isSelected = false)
+        NavIcon(icon = Icons.Default.CloudUpload, isSelected = false)
+        NavIcon(icon = Icons.Default.Apps, isSelected = false)
+        NavIcon(icon = Icons.Default.Phone, isSelected = false)
+
+        Spacer(Modifier.weight(1f))
+
+        // Bottom: AI icon
+        Box(
+            modifier = Modifier
+                .size(36.dp)
+                .clip(CircleShape)
+                .background(Color(0xFF1E3A5F)),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = Icons.Default.AutoAwesome,
+                contentDescription = "AI",
+                tint = AccentTeal,
+                modifier = Modifier.size(18.dp)
+            )
+        }
+
+        // Teal accent strip on left edge
+        Box(
+            modifier = Modifier
+                .width(3.dp)
+                .height(32.dp)
+                .clip(RoundedCornerShape(2.dp))
+                .background(AccentTeal)
+                .align(Alignment.Start)
+        )
+    }
+}
+
+@Composable
+private fun NavIcon(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    isSelected: Boolean,
+    tint: Color = if (isSelected) TextPrimary else TextSecondary
+) {
+    Box(
+        modifier = Modifier
+            .size(40.dp)
+            .clip(RoundedCornerShape(10.dp))
+            .background(if (isSelected) SurfaceVariant else Color.Transparent),
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = tint,
+            modifier = Modifier.size(20.dp)
+        )
+    }
+}
+
+// ─── Car Preview Panel ───────────────────────────────────────────────────────
+
+@Composable
+fun CarPreviewPanel(modifier: Modifier = Modifier) {
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(15.dp)
+            .clip(RoundedCornerShape(16.dp))
+            .background(SurfaceDark),
+        contentAlignment = Alignment.Center
+    ) {
+        // Subtle gradient glow under car
+        Box(
+            modifier = Modifier
+                .size(220.dp, 60.dp)
+                .align(Alignment.BottomCenter)
+                .offset(y = (-12).dp)
+                .background(
+                    Brush.radialGradient(
+                        colors = listOf(
+                            AccentTeal.copy(alpha = 0.15f),
+                            Color.Transparent
+                        )
+                    )
+                )
+                .blur(20.dp)
+        )
+
+        Image(
+            painter = painterResource(id = R.drawable.car_image),
+            contentDescription = "Car preview",
+            contentScale = ContentScale.Fit,
+            modifier = Modifier
+                .padding(10.dp)
+        )
+
+        // Status dot
+        Row(
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(6.dp)
+                    .clip(CircleShape)
+                    .background(AccentTeal)
+            )
+            Text("LIVE", fontSize = 9.sp, color = AccentTeal, fontWeight = FontWeight.Bold)
+        }
+    }
+}
+
+// ─── Record Button ───────────────────────────────────────────────────────────
+
+@Composable
+fun RecordButton(isRecording: Boolean, onClick: () -> Unit) {
+    val infiniteTransition = rememberInfiniteTransition(label = "pulse")
+    val glowAlpha by infiniteTransition.animateFloat(
+        initialValue = 0.3f,
+        targetValue = 0.7f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(900, easing = EaseInOutSine),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "glow"
+    )
+
+    Box(
+        modifier = Modifier.fillMaxWidth(),
+        contentAlignment = Alignment.Center
+    ) {
+        // Outer glow
+        Box(
+            modifier = Modifier
+                .size(220.dp, 70.dp)
+                .clip(RoundedCornerShape(50.dp))
+                .background(AccentRed.copy(alpha = glowAlpha * 0.25f))
+                .blur(16.dp)
+        )
+
+        Button(
+            onClick = onClick,
+            modifier = Modifier
+                .height(56.dp)
+                .fillMaxWidth(0.75f),
+            shape = RoundedCornerShape(50.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = AccentRed),
+            elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp)
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                Text(
+                    text = if (isRecording) "Stop" else "Record",
+                    fontSize = 17.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color.White
+                )
+                Box(
+                    modifier = Modifier
+                        .size(10.dp)
+                        .clip(if (isRecording) RoundedCornerShape(2.dp) else CircleShape)
+                        .background(Color.White)
+                )
+            }
+        }
+    }
+}
+
+// ─── Clip List Panel ─────────────────────────────────────────────────────────
+
+@Composable
+fun ClipListPanel(
+    modifier: Modifier = Modifier,
+    selectedTab: ClipTab,
+    onTabSelected: (ClipTab) -> Unit,
+    clips: List<VideoClip>
+) {
+    Column(
+        modifier = modifier
+            .fillMaxHeight()
+            .padding(15.dp)
+            .clip(RoundedCornerShape(16.dp))
+            .background(SurfaceDark)
+    ) {
+        // Tab Row
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            horizontalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            ClipTab.values().forEach { tab ->
+                ClipTabItem(
+                    label = tab.name,
+                    isSelected = selectedTab == tab,
+                    onClick = { onTabSelected(tab) },
+                    modifier = Modifier.weight(1f)
+                )
+            }
+        }
+
+        Divider(color = DividerColor, thickness = 1.dp)
+
+        // Clip List
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(vertical = 6.dp)
+        ) {
+            items(clips) { clip ->
+                ClipListItem(clip = clip)
+                Divider(
+                    color = DividerColor.copy(alpha = 0.5f),
+                    thickness = 0.5.dp,
+                    modifier = Modifier.padding(horizontal = 12.dp)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ClipTabItem(
+    label: String,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .clip(RoundedCornerShape(6.dp))
+            .clickable { onClick() }
+            .padding(vertical = 6.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(
+                text = label,
+                fontSize = 13.sp,
+                fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
+                color = if (isSelected) AccentTeal else TextSecondary
+            )
+            Spacer(Modifier.height(4.dp))
+            if (isSelected) {
+                Box(
+                    modifier = Modifier
+                        .height(2.dp)
+                        .fillMaxWidth(0.5f)
+                        .clip(RoundedCornerShape(1.dp))
+                        .background(AccentTeal)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ClipListItem(clip: VideoClip) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { }
+            .padding(horizontal = 12.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        // Thumbnail
+        Box(
+            modifier = Modifier
+                .size(110.dp, 66.dp)
+                .clip(RoundedCornerShape(8.dp))
+                .background(clip.thumbnailColor),
+            contentAlignment = Alignment.BottomEnd
+        ) {
+            // Fake road perspective lines
+            Canvas(modifier = Modifier.fillMaxSize()) {
+                val w = size.width
+                val h = size.height
+                val paint = androidx.compose.ui.graphics.Paint().apply {
+                    color = Color.White.copy(alpha = 0.12f)
+                    strokeWidth = 1.5f
+                }
+                drawIntoCanvas { canvas ->
+                    // horizon line
+                    canvas.drawLine(
+                        androidx.compose.ui.geometry.Offset(0f, h * 0.45f),
+                        androidx.compose.ui.geometry.Offset(w, h * 0.45f),
+                        paint
+                    )
+                    // left lane
+                    canvas.drawLine(
+                        androidx.compose.ui.geometry.Offset(w * 0.35f, h * 0.45f),
+                        androidx.compose.ui.geometry.Offset(w * 0.1f, h),
+                        paint
+                    )
+                    // right lane
+                    canvas.drawLine(
+                        androidx.compose.ui.geometry.Offset(w * 0.65f, h * 0.45f),
+                        androidx.compose.ui.geometry.Offset(w * 0.9f, h),
+                        paint
+                    )
+                }
+            }
+
+            // Timestamp badge
+            Box(
+                modifier = Modifier
+                    .padding(4.dp)
+                    .clip(RoundedCornerShape(4.dp))
+                    .background(Color.Black.copy(alpha = 0.65f))
+                    .padding(horizontal = 5.dp, vertical = 2.dp)
+            ) {
+                Text(
+                    text = clip.timestamp,
+                    fontSize = 10.sp,
+                    color = Color.White,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+        }
+
+        // Label
+        Column {
+            Text(
+                text = "${clip.title} - ${clip.timestamp}",
+                fontSize = 14.sp,
+                color = TextPrimary,
+                fontWeight = FontWeight.Medium,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            Spacer(Modifier.height(4.dp))
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(6.dp)
+                        .clip(CircleShape)
+                        .background(
+                            when (clip.type) {
+                                ClipTab.Parked  -> Color(0xFFFFA726)
+                                ClipTab.Driving -> AccentTeal
+                                ClipTab.Shared  -> Color(0xFF7C4DFF)
+                                ClipTab.All     -> TextSecondary
+                            }
+                        )
+                )
+                Text(
+                    text = clip.type.name,
+                    fontSize = 11.sp,
+                    color = TextSecondary
+                )
+            }
+        }
+    }
+}
+
+// ─── Preview ─────────────────────────────────────────────────────────────────
+
+@Preview(
+    showBackground = true,
+    widthDp = 900,
+    heightDp = 520,
+    backgroundColor = 0xFF1A1D22
+)
+@Composable
+fun DashcamScreenPreview() {
+    MaterialTheme {
+        DashcamScreen()
+    }
+}
