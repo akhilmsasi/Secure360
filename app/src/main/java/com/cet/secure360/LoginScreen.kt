@@ -2,7 +2,9 @@ package com.cet.secure360
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
+import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideInVertically
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -19,7 +21,9 @@ import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -45,31 +49,89 @@ fun LoginMainScreen(
     onLoginSuccess: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Box(
+    Row(
         modifier = Modifier
             .fillMaxSize()
-            .background(BackgroundDark),
-        contentAlignment = Alignment.Center
+            .background(BackgroundDark)
     ) {
-        // Background Decorative Elements
+        // Left Side: Car Image and Branding
         Box(
             modifier = Modifier
-                .size(400.dp)
-                .align(Alignment.TopEnd)
-                .offset(x = 100.dp, y = (-100).dp)
-                .background(Brush.radialGradient(listOf(AccentTeal.copy(alpha = 0.1f), Color.Transparent)))
-                .blur(50.dp)
-        )
-        Box(
-            modifier = Modifier
-                .size(300.dp)
-                .align(Alignment.BottomStart)
-                .offset(x = (-50).dp, y = 50.dp)
-                .background(Brush.radialGradient(listOf(AccentRed.copy(alpha = 0.05f), Color.Transparent)))
-                .blur(50.dp)
-        )
+                .weight(1.2f)
+                .fillMaxHeight()
+                .padding(48.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            // Background Glow
+            Box(
+                modifier = Modifier
+                    .size(500.dp)
+                    .background(Brush.radialGradient(listOf(AccentTeal.copy(alpha = 0.15f), Color.Transparent)))
+                    .blur(60.dp)
+            )
 
-        LoginScreen(onNavigateToRegister = onNavigateToRegister, onLoginSuccess = onLoginSuccess)
+            Column(
+                horizontalAlignment = Alignment.Start,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(
+                    text = "Secure360 Pro",
+                    color = AccentTeal,
+                    fontSize = 42.sp,
+                    fontWeight = FontWeight.Black,
+                    letterSpacing = (-1).sp
+                )
+                Text(
+                    text = "NEXT-GEN VEHICLE SECURITY",
+                    color = TextSecondary,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 2.sp
+                )
+                
+                Spacer(Modifier.height(40.dp))
+                
+                Image(
+                    painter = painterResource(id = R.drawable.car_image),
+                    contentDescription = "Car Preview",
+                    contentScale = ContentScale.Fit,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(280.dp)
+                )
+                
+                Spacer(Modifier.height(40.dp))
+                
+                // Feature List
+                FeatureItem(Icons.Default.CloudSync, "Real-time Cloud backup & synchronization")
+                FeatureItem(Icons.Default.PrecisionManufacturing, "AI-Powered Incident Detection")
+                FeatureItem(Icons.Default.Security, "24/7 Intelligent Sentry Monitoring")
+            }
+        }
+
+        // Right Side: Login Form
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxHeight()
+                .background(SurfaceDark.copy(alpha = 0.5f))
+                .padding(48.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            LoginScreen(onNavigateToRegister = onNavigateToRegister, onLoginSuccess = onLoginSuccess)
+        }
+    }
+}
+
+@Composable
+private fun FeatureItem(icon: androidx.compose.ui.graphics.vector.ImageVector, text: String) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.padding(vertical = 8.dp)
+    ) {
+        Icon(icon, null, tint = AccentTeal, modifier = Modifier.size(20.dp))
+        Spacer(Modifier.width(16.dp))
+        Text(text = text, color = TextPrimary, fontSize = 14.sp, fontWeight = FontWeight.Medium)
     }
 }
 
@@ -89,194 +151,152 @@ fun LoginScreen(
 
     AnimatedVisibility(
         visible = visible,
-        enter = fadeIn() + slideInVertically(initialOffsetY = { 40 })
+        enter = fadeIn() + slideInHorizontally(initialOffsetX = { 40 })
     ) {
-        Card(
+        Column(
             modifier = Modifier
-                .width(420.dp)
-                .padding(24.dp),
-            colors = CardDefaults.cardColors(containerColor = SurfaceDark),
-            shape = RoundedCornerShape(24.dp),
-            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+                .width(400.dp),
+            horizontalAlignment = Alignment.Start
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(32.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                // Logo Section
+            Text(
+                text = "Welcome Back",
+                color = TextPrimary,
+                fontSize = 32.sp,
+                fontWeight = FontWeight.Bold
+            )
+            Text(
+                text = "Sign in to access your vehicle dashboard",
+                color = TextSecondary,
+                fontSize = 14.sp
+            )
+
+            Spacer(Modifier.height(40.dp))
+
+            // Error Message
+            if (viewModel.loginError != null) {
                 Box(
                     modifier = Modifier
-                        .size(64.dp)
-                        .clip(CircleShape)
-                        .background(AccentTeal.copy(alpha = 0.1f)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Security,
-                        contentDescription = null,
-                        tint = AccentTeal,
-                        modifier = Modifier.size(32.dp)
-                    )
-                }
-
-                Spacer(Modifier.height(24.dp))
-
-                Text(
-                    text = "Secure360 Pro",
-                    color = TextPrimary,
-                    fontSize = 28.sp,
-                    fontWeight = FontWeight.Black
-                )
-                Text(
-                    text = "Intelligent Vehicle Monitoring",
-                    color = TextSecondary,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Medium
-                )
-
-                Spacer(Modifier.height(32.dp))
-
-                // Error Message
-                if (viewModel.loginError != null) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(AccentRed.copy(alpha = 0.1f))
-                            .padding(12.dp)
-                    ) {
-                        Text(
-                            text = viewModel.loginError ?: "",
-                            color = AccentRed,
-                            fontSize = 13.sp,
-                            modifier = Modifier.fillMaxWidth(),
-                            textAlign = TextAlign.Center
-                        )
-                    }
-                    Spacer(Modifier.height(16.dp))
-                }
-
-                // Input Fields
-                OutlinedTextField(
-                    value = username,
-                    onValueChange = { username = it },
-                    label = { Text("Username") },
-                    placeholder = { Text("Enter your username") },
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = TextPrimary,
-                        unfocusedTextColor = TextPrimary,
-                        focusedBorderColor = AccentTeal,
-                        unfocusedBorderColor = SurfaceVariant,
-                        focusedLabelColor = AccentTeal,
-                        unfocusedLabelColor = TextSecondary,
-                        cursorColor = AccentTeal,
-                        focusedContainerColor = SurfaceVariant.copy(alpha = 0.3f),
-                        unfocusedContainerColor = SurfaceVariant.copy(alpha = 0.3f)
-                    ),
-                    leadingIcon = {
-                        Icon(Icons.Default.AlternateEmail, null, tint = TextSecondary, modifier = Modifier.size(20.dp))
-                    },
-                    shape = RoundedCornerShape(12.dp),
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
-                )
-
-                Spacer(Modifier.height(16.dp))
-
-                OutlinedTextField(
-                    value = password,
-                    onValueChange = { password = it },
-                    label = { Text("Password") },
-                    placeholder = { Text("Enter your password") },
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = TextPrimary,
-                        unfocusedTextColor = TextPrimary,
-                        focusedBorderColor = AccentTeal,
-                        unfocusedBorderColor = SurfaceVariant,
-                        focusedLabelColor = AccentTeal,
-                        unfocusedLabelColor = TextSecondary,
-                        cursorColor = AccentTeal,
-                        focusedContainerColor = SurfaceVariant.copy(alpha = 0.3f),
-                        unfocusedContainerColor = SurfaceVariant.copy(alpha = 0.3f)
-                    ),
-                    leadingIcon = {
-                        Icon(Icons.Default.LockOpen, null, tint = TextSecondary, modifier = Modifier.size(20.dp))
-                    },
-                    trailingIcon = {
-                        val image = if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff
-                        IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                            Icon(image, null, tint = TextSecondary, modifier = Modifier.size(20.dp))
-                        }
-                    },
-                    visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                    shape = RoundedCornerShape(12.dp),
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
-                )
-
-                Spacer(Modifier.height(12.dp))
-
-                Text(
-                    text = "Forgot Password?",
-                    color = AccentTeal,
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier
-                        .align(Alignment.End)
-                        .clickable { /* Reset logic */ }
-                )
-
-                Spacer(Modifier.height(32.dp))
-
-                // Login Button
-                Button(
-                    onClick = {
-                        viewModel.loginUser(username, password, context) { success ->
-                            if (success) onLoginSuccess()
-                        }
-                    },
-                    modifier = Modifier
                         .fillMaxWidth()
-                        .height(56.dp),
-                    enabled = !viewModel.isLoading,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = AccentTeal,
-                        disabledContainerColor = AccentTeal.copy(alpha = 0.5f)
-                    ),
-                    shape = RoundedCornerShape(12.dp),
-                    elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(AccentRed.copy(alpha = 0.1f))
+                        .padding(16.dp)
                 ) {
-                    if (viewModel.isLoading) {
-                        CircularProgressIndicator(modifier = Modifier.size(24.dp), color = Color.White, strokeWidth = 2.dp)
-                    } else {
-                        Text(
-                            text = "SIGN IN",
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.ExtraBold,
-                            letterSpacing = 1.sp
-                        )
-                    }
-                }
-
-                Spacer(Modifier.height(24.dp))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(text = "New user?", color = TextSecondary, fontSize = 14.sp)
                     Text(
-                        text = " Create Account",
-                        color = AccentTeal,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.clickable { onNavigateToRegister() }
+                        text = viewModel.loginError ?: "",
+                        color = AccentRed,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Medium
                     )
                 }
+                Spacer(Modifier.height(24.dp))
+            }
+
+            // Input Fields
+            Text("Username", color = TextPrimary, fontSize = 14.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 8.dp))
+            OutlinedTextField(
+                value = username,
+                onValueChange = { username = it },
+                placeholder = { Text("admin_secure", color = TextSecondary.copy(alpha = 0.5f)) },
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedTextColor = TextPrimary,
+                    unfocusedTextColor = TextPrimary,
+                    focusedBorderColor = AccentTeal,
+                    unfocusedBorderColor = SurfaceVariant,
+                    cursorColor = AccentTeal,
+                    focusedContainerColor = SurfaceVariant.copy(alpha = 0.3f),
+                    unfocusedContainerColor = SurfaceVariant.copy(alpha = 0.3f)
+                ),
+                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true
+            )
+
+            Spacer(Modifier.height(24.dp))
+
+            Text("Password", color = TextPrimary, fontSize = 14.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 8.dp))
+            OutlinedTextField(
+                value = password,
+                onValueChange = { password = it },
+                placeholder = { Text("••••••••", color = TextSecondary.copy(alpha = 0.5f)) },
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedTextColor = TextPrimary,
+                    unfocusedTextColor = TextPrimary,
+                    focusedBorderColor = AccentTeal,
+                    unfocusedBorderColor = SurfaceVariant,
+                    cursorColor = AccentTeal,
+                    focusedContainerColor = SurfaceVariant.copy(alpha = 0.3f),
+                    unfocusedContainerColor = SurfaceVariant.copy(alpha = 0.3f)
+                ),
+                trailingIcon = {
+                    val image = if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff
+                    IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                        Icon(image, null, tint = TextSecondary, modifier = Modifier.size(20.dp))
+                    }
+                },
+                visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true
+            )
+
+            Spacer(Modifier.height(16.dp))
+
+            Text(
+                text = "Forgot password?",
+                color = AccentTeal,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier
+                    .align(Alignment.End)
+                    .clickable { }
+            )
+
+            Spacer(Modifier.height(40.dp))
+
+            // Login Button
+            Button(
+                onClick = {
+                    viewModel.loginUser(username, password, context) { success ->
+                        if (success) onLoginSuccess()
+                    }
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp),
+                enabled = !viewModel.isLoading,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = AccentTeal,
+                    disabledContainerColor = AccentTeal.copy(alpha = 0.5f)
+                ),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                if (viewModel.isLoading) {
+                    CircularProgressIndicator(modifier = Modifier.size(24.dp), color = Color.White, strokeWidth = 2.dp)
+                } else {
+                    Text(
+                        text = "SIGN IN",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        letterSpacing = 1.sp
+                    )
+                }
+            }
+
+            Spacer(Modifier.height(32.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center
+            ) {
+                Text(text = "Don't have an account?", color = TextSecondary, fontSize = 14.sp)
+                Text(
+                    text = " Register Vehicle",
+                    color = AccentTeal,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.clickable { onNavigateToRegister() }
+                )
             }
         }
     }
