@@ -59,7 +59,7 @@ class RecordingViewModel(private val apiService: ApiService) : ViewModel() {
         viewModelScope.launch {
             while (true) {
                 refreshStatus()
-                delay(5000) // Poll every 5 seconds
+                delay(500) // Poll every 500ms
             }
         }
     }
@@ -97,7 +97,7 @@ class RecordingViewModel(private val apiService: ApiService) : ViewModel() {
                 } catch (e: Exception) {
                     Log.e(TAG, "Error fetching incidents", e)
                 }
-                delay(5000) // Polls every 5 seconds
+                delay(500) // Polls every 500ms
             }
         }
     }

@@ -18,7 +18,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -31,8 +30,11 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.cet.secure360.localdatabase.RetrofitClient
 import com.cet.secure360.model.IncidentRecord
 import com.cet.secure360.model.dummyIncidentList
+import com.cet.secure360.viewmodel.RecordingViewModel
 import kotlinx.coroutines.delay
 
 // ─── Color Palette ───────────────────────────────────────────────────────────
@@ -57,9 +59,14 @@ enum class ClipTab { All, Parked, Driving, Shared }
 
 @Composable
 fun DashcamScreen() {
+    val viewModel: RecordingViewModel = viewModel(
+        factory = RecordingViewModel.Factory(RetrofitClient.apiService)
+    )
+
     var currentNavItem by remember { mutableStateOf(DashcamNavItem.Home) }
     var selectedTab by remember { mutableStateOf(ClipTab.All) }
-    var isRecording by remember { mutableStateOf(false) }
+    val currentStatus by viewModel.recordingStatus.collectAsState()
+    val isRecording = currentStatus == 1
     val context = LocalContext.current
 
     // Hoisted timer state
@@ -165,7 +172,7 @@ fun DashcamScreen() {
                         RecordButton(
                             isRecording = isRecording,
                             seconds = recordingSeconds,
-                            onClick = { isRecording = !isRecording }
+                            onClick = { viewModel.setRecordingStatus(if (isRecording) 0 else 1) }
                         )
                     }
 
@@ -444,6 +451,14 @@ fun CloudUploadPanel(modifier: Modifier = Modifier, incidents: List<IncidentReco
 fun CarPreviewPanel(modifier: Modifier = Modifier) {
     Box(modifier = modifier.fillMaxWidth().padding(15.dp).clip(RoundedCornerShape(16.dp)).background(SurfaceDark).border(1.dp, Color.White.copy(alpha = 0.05f), RoundedCornerShape(16.dp)), contentAlignment = Alignment.Center) {
         Box(modifier = Modifier.size(260.dp, 80.dp).align(Alignment.BottomCenter).offset(y = (-20).dp).background(Brush.radialGradient(colors = listOf(AccentTeal.copy(alpha = 0.2f), Color.Transparent))).blur(30.dp))
+
+        Box(
+            modifier = Modifier
+                .size(500.dp)
+                .background(Brush.radialGradient(listOf(AccentTeal.copy(alpha = 0.15f), Color.Transparent)))
+                .blur(60.dp)
+        )
+
         Column(modifier = Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
             Image(painter = painterResource(R.drawable.car_image), null, contentScale = ContentScale.FillWidth, modifier = Modifier.padding(bottom = 10.dp))
         }
