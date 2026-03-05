@@ -33,7 +33,6 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.cet.secure360.localdatabase.RetrofitClient
 import com.cet.secure360.model.IncidentRecord
-import com.cet.secure360.model.dummyIncidentList
 import com.cet.secure360.viewmodel.RecordingViewModel
 import kotlinx.coroutines.delay
 
@@ -66,6 +65,7 @@ fun DashcamScreen() {
     var currentNavItem by remember { mutableStateOf(DashcamNavItem.Home) }
     var selectedTab by remember { mutableStateOf(ClipTab.All) }
     val currentStatus by viewModel.recordingStatus.collectAsState()
+    val allIncidents by viewModel.incidents.collectAsState()
     val isRecording = currentStatus == 1
     val context = LocalContext.current
 
@@ -84,8 +84,20 @@ fun DashcamScreen() {
         }
     }
 
-    // Selected incident for Video library view
-    var selectedIncident by remember { mutableStateOf<IncidentRecord?>(dummyIncidentList.firstOrNull()) }
+    // Selected incident ID for Video library view
+    var selectedIncidentId by remember { mutableStateOf<String?>(null) }
+
+    // Auto-select first incident when list is loaded if none selected
+    LaunchedEffect(allIncidents) {
+        if (selectedIncidentId == null && allIncidents.isNotEmpty()) {
+            selectedIncidentId = allIncidents.firstOrNull()?.id
+        }
+    }
+
+    // Always get the latest incident data from the list based on the ID
+    val selectedIncident = remember(selectedIncidentId, allIncidents) {
+        allIncidents.find { it.id == selectedIncidentId }
+    }
 
     // Safety Settings States
     var faceDetectionEnabled by remember { mutableStateOf(false) }
@@ -93,9 +105,9 @@ fun DashcamScreen() {
     var hardBrakingEnabled by remember { mutableStateOf(false) }
     var alarmEnabled by remember { mutableStateOf(false) }
 
-    val filteredIncidents = remember(selectedTab) {
-        if (selectedTab == ClipTab.All) dummyIncidentList
-        else dummyIncidentList.filter { incident ->
+    val filteredIncidents = remember(selectedTab, allIncidents) {
+        if (selectedTab == ClipTab.All) allIncidents
+        else allIncidents.filter { incident ->
             when (selectedTab) {
                 ClipTab.Parked -> incident.incidentType == 0
                 ClipTab.Driving -> incident.incidentType != 0
@@ -138,7 +150,7 @@ fun DashcamScreen() {
                         onTabSelected = { selectedTab = it },
                         incidents = filteredIncidents,
                         selectedIncident = selectedIncident,
-                        onIncidentClick = { selectedIncident = it }
+                        onIncidentClick = { selectedIncidentId = it.id }
                     )
 
                     // ── Right Panel: Event Details ────────────────────────────────
@@ -195,7 +207,7 @@ fun DashcamScreen() {
                         DashcamNavItem.Cloud -> {
                             CloudUploadPanel(
                                 modifier = rightPanelModifier,
-                                incidents = dummyIncidentList
+                                incidents = allIncidents
                             )
                         }
                         DashcamNavItem.Profile -> {
@@ -219,7 +231,7 @@ fun DashcamScreen() {
                                 incidents = filteredIncidents,
                                 selectedIncident = null, // No selection bar on Home
                                 onIncidentClick = { incident ->
-                                    selectedIncident = incident
+                                    selectedIncidentId = incident.id
                                     currentNavItem = DashcamNavItem.Video
                                 }
                             )

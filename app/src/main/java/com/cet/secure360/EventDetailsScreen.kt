@@ -245,7 +245,20 @@ fun EventDetailsMainScreen(
                     
                     DataRow("Latitude", incident.locationLat.toString())
                     DataRow("Longitude", incident.locationLong.toString())
-                    DataRow("Upload status", "${incident.fileUploadedStatus}%")
+                    
+                    // Progress Indicator for Upload
+                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                            Text("Upload status", color = TextSecondary, fontSize = 11.sp)
+                            Text("${incident.fileUploadedStatus}%", color = if (incident.fileUploadedStatus == 100) AccentTeal else Color(0xFFFFA726), fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+                        }
+                        LinearProgressIndicator(
+                            progress = { incident.fileUploadedStatus / 100f },
+                            modifier = Modifier.fillMaxWidth().height(4.dp).clip(RoundedCornerShape(2.dp)),
+                            color = if (incident.fileUploadedStatus == 100) AccentTeal else Color(0xFFFFA726),
+                            trackColor = SurfaceDark
+                        )
+                    }
                     
                     Spacer(Modifier.weight(1f))
                     
