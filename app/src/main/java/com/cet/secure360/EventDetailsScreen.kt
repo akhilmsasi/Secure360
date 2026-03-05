@@ -169,7 +169,7 @@ fun EventDetailsMainScreen(
                     )
                     StatCard(
                         label = "Transmission",
-                        value = "Gear D${incident.gear}",
+                        value = if (incident.gear == 0) "Parked" else "Drive",
                         icon = Icons.Default.Settings,
                         color = TextSecondary
                     )

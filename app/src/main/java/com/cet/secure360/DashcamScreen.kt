@@ -48,6 +48,13 @@ private val TextSecondary    = Color(0xFF8D93A1)
 private val SidebarBg        = Color(0xFF13161B)
 private val DividerColor     = Color(0xFF2E333D)
 
+// ─── Constants for Event Types ───────────────────────────────────────────────
+
+private const val FACE_DETECTION = 2
+private const val HONK_EVENT = 3
+private const val HARD_BRAKING = 4
+private const val ALARM = 5
+
 // ─── Data Models ─────────────────────────────────────────────────────────────
 
 enum class DashcamNavItem { Home, Car, Video, Cloud, Profile }
@@ -66,6 +73,8 @@ fun DashcamScreen() {
     var selectedTab by remember { mutableStateOf(ClipTab.All) }
     val currentStatus by viewModel.recordingStatus.collectAsState()
     val allIncidents by viewModel.incidents.collectAsState()
+    val eventStatuses by viewModel.eventStatuses.collectAsState()
+    
     val isRecording = currentStatus == 1
     val context = LocalContext.current
 
@@ -99,18 +108,18 @@ fun DashcamScreen() {
         allIncidents.find { it.id == selectedIncidentId }
     }
 
-    // Safety Settings States
-    var faceDetectionEnabled by remember { mutableStateOf(false) }
-    var honkEventEnabled by remember { mutableStateOf(false) }
-    var hardBrakingEnabled by remember { mutableStateOf(false) }
-    var alarmEnabled by remember { mutableStateOf(false) }
+    // Safety Settings States from Database
+    val faceDetectionEnabled = eventStatuses[FACE_DETECTION] == 1
+    val honkEventEnabled = eventStatuses[HONK_EVENT] == 1
+    val hardBrakingEnabled = eventStatuses[HARD_BRAKING] == 1
+    val alarmEnabled = eventStatuses[ALARM] == 1
 
     val filteredIncidents = remember(selectedTab, allIncidents) {
         if (selectedTab == ClipTab.All) allIncidents
         else allIncidents.filter { incident ->
             when (selectedTab) {
-                ClipTab.Parked -> incident.incidentType == 0
-                ClipTab.Driving -> incident.incidentType != 0
+                ClipTab.Parked -> incident.gear == 0
+                ClipTab.Driving -> incident.gear == 1
                 ClipTab.Shared -> false
                 else -> true
             }
@@ -195,13 +204,13 @@ fun DashcamScreen() {
                             SafetySettingsPanel(
                                 modifier = rightPanelModifier,
                                 faceDetection = faceDetectionEnabled,
-                                onFaceDetectionChange = { faceDetectionEnabled = it },
+                                onFaceDetectionChange = { viewModel.updateEventStatus(FACE_DETECTION, if (it) 1 else 0) },
                                 honkEvent = honkEventEnabled,
-                                onHonkEventChange = { honkEventEnabled = it },
+                                onHonkEventChange = { viewModel.updateEventStatus(HONK_EVENT, if (it) 1 else 0) },
                                 hardBraking = hardBrakingEnabled,
-                                onHardBrakingChange = { hardBrakingEnabled = it },
+                                onHardBrakingChange = { viewModel.updateEventStatus(HARD_BRAKING, if (it) 1 else 0) },
                                 alarm = alarmEnabled,
-                                onAlarmChange = { alarmEnabled = it }
+                                onAlarmChange = { viewModel.updateEventStatus(ALARM, if (it) 1 else 0) }
                             )
                         }
                         DashcamNavItem.Cloud -> {
@@ -601,7 +610,7 @@ private fun ClipListItem(incident: IncidentRecord, isSelected: Boolean = false, 
             Text("${incident.title} - ${incident.date}", fontSize = 14.sp, color = if (isSelected) AccentTeal else TextPrimary, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium, maxLines = 1, overflow = TextOverflow.Ellipsis)
             Spacer(Modifier.height(4.dp))
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                Box(modifier = Modifier.size(6.dp).clip(CircleShape).background(if (incident.incidentType == 0) Color(0xFFFFA726) else AccentTeal))
+                Box(modifier = Modifier.size(6.dp).clip(CircleShape).background(if (incident.gear == 0) Color(0xFFFFA726) else AccentTeal))
                 Text("${incident.placeCityName}, ${incident.roadName}", fontSize = 11.sp, color = if (isSelected) TextPrimary.copy(alpha = 0.8f) else TextSecondary)
             }
         }
