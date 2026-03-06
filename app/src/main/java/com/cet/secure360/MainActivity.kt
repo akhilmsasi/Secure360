@@ -17,10 +17,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.cet.secure360.ui.theme.Secure360Theme
+import java.net.URLDecoder
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -68,7 +73,23 @@ fun MainScreen(modifier: Modifier = Modifier) {
                 )
             }
             composable("home_screen") {
-                DashcamScreen()
+                DashcamScreen(
+                    onPlayVideo = { videoUrl ->
+                        val encodedUrl = URLEncoder.encode(videoUrl, StandardCharsets.UTF_8.toString())
+                        navController.navigate("player_screen/$encodedUrl")
+                    }
+                )
+            }
+            composable(
+                route = "player_screen/{videoUrl}",
+                arguments = listOf(navArgument("videoUrl") { type = NavType.StringType })
+            ) { backStackEntry ->
+                val encodedUrl = backStackEntry.arguments?.getString("videoUrl") ?: ""
+                val decodedUrl = URLDecoder.decode(encodedUrl, StandardCharsets.UTF_8.toString())
+                VideoPlayerScreen(
+                    videoUrl = decodedUrl,
+                    onBackClick = { navController.popBackStack() }
+                )
             }
         }
 

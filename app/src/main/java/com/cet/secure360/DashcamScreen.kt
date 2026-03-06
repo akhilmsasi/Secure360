@@ -64,7 +64,9 @@ enum class ClipTab { All, Parked, Driving, Shared }
 // ─── Main Screen ─────────────────────────────────────────────────────────────
 
 @Composable
-fun DashcamScreen() {
+fun DashcamScreen(
+    onPlayVideo: (String) -> Unit = {}
+) {
     val viewModel: RecordingViewModel = viewModel(
         factory = RecordingViewModel.Factory(RetrofitClient.apiService)
     )
@@ -172,7 +174,8 @@ fun DashcamScreen() {
                     ) {
                         selectedIncident?.let {
                             EventDetailsMainScreen(
-                                incident = it
+                                incident = it,
+                                onPlayFootageClick = { onPlayVideo(it) }
                             )
                         } ?: Box(
                             modifier = Modifier.fillMaxSize(),
