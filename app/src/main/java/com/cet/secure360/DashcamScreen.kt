@@ -405,28 +405,51 @@ fun SafetySettingsPanel(
             }
         }
         HorizontalDivider(color = DividerColor, thickness = 1.dp)
-        Column(modifier = Modifier.fillMaxSize().padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 20.dp)
+                .verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Spacer(Modifier.height(8.dp))
+            
+            SafetyToggleCard("NORMAL RECORDING", "Continuous loop recording while driving", Icons.Outlined.Videocam, true, {}, isLocked = true)
+            SafetyToggleCard("CRASH RECORDING", "High-priority emergency event capture", Icons.Outlined.Report, true, {}, isLocked = true)
             SafetyToggleCard("FACE DETECTION", "Detect and alert driver fatigue or distraction", Icons.Outlined.Face, faceDetection, onFaceDetectionChange)
             SafetyToggleCard("HONK EVENT", "Automatically record when unusual honking occurs", Icons.Outlined.VolumeUp, honkEvent, onHonkEventChange)
             SafetyToggleCard("HARD BRAKING", "Trigger emergency recording on sudden deceleration", Icons.Outlined.ReportProblem, hardBraking, onHardBrakingChange)
             SafetyToggleCard("ALARM SYSTEM", "Enable audible alerts for critical safety events", Icons.Outlined.NotificationsActive, alarm, onAlarmChange)
-            Spacer(Modifier.weight(1f))
+            
+            Spacer(Modifier.height(8.dp))
+            
             Row(modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp)).background(AccentTeal.copy(alpha = 0.05f)).padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
                 Icon(Icons.Default.Info, null, tint = AccentTeal, modifier = Modifier.size(16.dp))
                 Spacer(Modifier.width(8.dp))
                 Text("Some features may require active internet connection for real-time cloud sync.", color = AccentTeal.copy(alpha = 0.8f), fontSize = 11.sp)
             }
+            Spacer(Modifier.height(12.dp))
         }
     }
 }
 
 @Composable
-private fun SafetyToggleCard(title: String, description: String, icon: ImageVector, checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
+private fun SafetyToggleCard(
+    title: String, 
+    description: String, 
+    icon: ImageVector, 
+    checked: Boolean, 
+    onCheckedChange: (Boolean) -> Unit,
+    isLocked: Boolean = false
+) {
     Row(
-        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(if (checked) SurfaceVariant else SurfaceVariant.copy(alpha = 0.5f))
+        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp))
+            .background(if (checked) SurfaceVariant else SurfaceVariant.copy(alpha = 0.5f))
             .border(1.dp, if (checked) AccentTeal.copy(alpha = 0.3f) else Color.Transparent, RoundedCornerShape(12.dp))
-            .clickable { onCheckedChange(!checked) }.padding(16.dp),
-        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween
+            .then(if (!isLocked) Modifier.clickable { onCheckedChange(!checked) } else Modifier)
+            .padding(16.dp),
+        verticalAlignment = Alignment.CenterVertically, 
+        horizontalArrangement = Arrangement.SpaceBetween
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
             Box(modifier = Modifier.size(40.dp).clip(CircleShape).background(if (checked) AccentTeal.copy(alpha = 0.1f) else BackgroundDark.copy(alpha = 0.5f)), contentAlignment = Alignment.Center) {
@@ -434,11 +457,31 @@ private fun SafetyToggleCard(title: String, description: String, icon: ImageVect
             }
             Spacer(Modifier.width(16.dp))
             Column {
-                Text(title, color = if (checked) AccentTeal else TextPrimary, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(title, color = if (checked) AccentTeal else TextPrimary, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                    if (isLocked) {
+                        Spacer(Modifier.width(8.dp))
+                        Icon(Icons.Default.Lock, null, tint = TextSecondary.copy(alpha = 0.5f), modifier = Modifier.size(12.dp))
+                    }
+                }
                 Text(description, color = TextSecondary, fontSize = 11.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
         }
-        Switch(checked = checked, onCheckedChange = onCheckedChange, colors = SwitchDefaults.colors(checkedThumbColor = Color.White, checkedTrackColor = AccentTeal, uncheckedThumbColor = TextSecondary, uncheckedTrackColor = BackgroundDark, uncheckedBorderColor = DividerColor))
+        if (isLocked) {
+            Text("ALWAYS ON", color = AccentTeal, fontSize = 10.sp, fontWeight = FontWeight.Black)
+        } else {
+            Switch(
+                checked = checked, 
+                onCheckedChange = onCheckedChange, 
+                colors = SwitchDefaults.colors(
+                    checkedThumbColor = Color.White, 
+                    checkedTrackColor = AccentTeal, 
+                    uncheckedThumbColor = TextSecondary, 
+                    uncheckedTrackColor = BackgroundDark, 
+                    uncheckedBorderColor = DividerColor
+                )
+            )
+        }
     }
 }
 

@@ -1,10 +1,5 @@
 package com.cet.secure360
 
-// Firebase Constants
-object FirebaseConfig {
-    const val USERS_NODE = "users"
-}
-
 // Data Model
 data class UserRegistration(
     val name: String = "",
