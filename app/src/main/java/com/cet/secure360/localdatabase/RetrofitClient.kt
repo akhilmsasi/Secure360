@@ -5,9 +5,8 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
 object RetrofitClient {
-    // IMPORTANT: Ensure this matches the IP in your screenshot (192.168.1.40)
-    // Updated BASE_URL to point to the correct directory containing your PHP files.
-    private const val BASE_URL = "http://192.168.1.47/my_app/"
+    // Updated BASE_URL to include port 8080
+    private const val BASE_URL = "http://192.168.1.46:8080/my_app/"
 
     private val gson = GsonBuilder()
         .setLenient()
