@@ -1,13 +1,23 @@
 package com.cet.secure360.model
 
+import com.google.gson.annotations.SerializedName
+
 data class IncidentRecord(
     val id: String = "",
+    
+    @SerializedName("incident_date")
     val date: String = "",
+    
+    @SerializedName("incident_time")
     val time: String = "",
+    
     val title: String = "",
     val locationLat: Double = 0.0,
     val locationLong: Double = 0.0,
-    val fileUploadedStatus: Int = 0, // Represents percentage from 0 to 100
+    
+    @SerializedName("upload_progress")
+    val fileUploadedStatus: Int = 0, // Maps to the 100% progress field in Firebase
+
     val placeCityName: String = "",
     val roadName: String = "",
     val vehicleSpeed: Float = 0.0f,
