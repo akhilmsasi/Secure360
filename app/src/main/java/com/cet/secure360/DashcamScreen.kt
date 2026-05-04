@@ -71,6 +71,8 @@ fun DashcamScreen(
         factory = RecordingViewModel.Factory(RetrofitClient.apiService)
     )
 
+
+
     var currentNavItem by remember { mutableStateOf(DashcamNavItem.Home) }
     var selectedTab by remember { mutableStateOf(ClipTab.All) }
     val currentStatus by viewModel.recordingStatus.collectAsState()
@@ -79,6 +81,8 @@ fun DashcamScreen(
     
     val isRecording = currentStatus == 1
     val context = LocalContext.current
+
+    viewModel.loadUsername(context)
 
     // Hoisted timer state
     var recordingSeconds by remember { mutableStateOf(30) }
