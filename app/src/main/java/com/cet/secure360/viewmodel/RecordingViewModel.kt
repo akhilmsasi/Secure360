@@ -1,5 +1,6 @@
 package com.cet.secure360.viewmodel
 
+import android.content.Context
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -8,6 +9,10 @@ import com.cet.secure360.localdatabase.ApiService
 import com.cet.secure360.model.EventStatus
 import com.cet.secure360.model.IncidentRecord
 import com.cet.secure360.model.RecordingStatus
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
+import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.ValueEventListener
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -26,6 +31,9 @@ class RecordingViewModel(private val apiService: ApiService) : ViewModel() {
     private val _errorMessage = MutableStateFlow<String?>(null)
     val errorMessage = _errorMessage.asStateFlow()
 
+    private val _username = MutableStateFlow<String?>(null)
+    val username = _username.asStateFlow()
+
     private val _isLoading = MutableStateFlow(false)
     val isLoading = _isLoading.asStateFlow()
 
@@ -42,6 +50,29 @@ class RecordingViewModel(private val apiService: ApiService) : ViewModel() {
         startAutoCheck()
         startMonitoring()
         startEventStatusMonitoring()
+    }
+
+    private fun startRecordingStatusMonitoring() {
+
+        Log.d(TAG, "startRecordingStatusMonitoring: Entry UserName :: ${_username.value}")
+
+        val database = FirebaseDatabase.getInstance().reference
+        if (_username.value!=null){
+            database.child("users").child(_username.value!!)
+                .child("RecordingUpdateFromApp")
+                .child("isRecording").addValueEventListener(object : ValueEventListener {
+                    override fun onDataChange(p0: DataSnapshot) {
+
+                        Log.d(TAG, "startRecordingStatusMonitoring: Status :: $p0")
+
+                        setRecordingStatus(if (_recordingStatus.value == 1) 0 else 1)
+                    }
+
+                    override fun onCancelled(p0: DatabaseError) {
+//                        TODO("Not yet implemented")
+                    }
+                })
+        }
     }
 
     /**
@@ -175,6 +206,18 @@ class RecordingViewModel(private val apiService: ApiService) : ViewModel() {
                 Log.e(TAG, "Error updating event status", e)
             }
         }
+    }
+
+    fun loadUsername(context: Context) {
+        val sharedPref = context.getSharedPreferences("secure_prefs", Context.MODE_PRIVATE)
+
+        val newUsername = sharedPref.getString("username", null)
+
+        if (_username.value != newUsername){
+            _username.value = newUsername
+            startRecordingStatusMonitoring()
+        }
+
     }
 
     class Factory(private val apiService: ApiService) : ViewModelProvider.Factory {
