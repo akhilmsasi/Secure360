@@ -354,17 +354,41 @@ class RecordingViewModel(private val apiService: ApiService) : ViewModel() {
                             }
                         }
 
-                        // Merge fetched values but skip any event types currently updating locally
+                        // For each fetched change originating from Firebase (external client),
+                        // sync it to the local DB first, then update in-memory state. Skip any
+                        // event types that are currently being updated locally to avoid loops.
                         val merged = _eventStatuses.value.toMutableMap()
-                        var changed = false
                         for ((k, v) in fetched) {
                             if (updatingEventTypes.contains(k)) continue
-                            if (merged[k] != v) {
-                                merged[k] = v
-                                changed = true
+
+                            val current = merged[k]
+                            if (current == v) continue
+
+                            // Synchronize change into local DB via API before applying locally
+                            updatingEventTypes.add(k)
+                            viewModelScope.launch {
+                                try {
+                                    val resp = try {
+                                        apiService.updateEventStatus(k, v)
+                                    } catch (ex: Exception) {
+                                        Log.e(TAG, "API error syncing event from Firebase: $k", ex)
+                                        null
+                                    }
+
+                                    if (resp != null && resp.isSuccessful) {
+                                        // Apply the synced value into in-memory state
+                                        val m = _eventStatuses.value.toMutableMap()
+                                        m[k] = v
+                                        _eventStatuses.value = m
+                                    } else {
+                                        Log.e(TAG, "Failed to sync event $k to local DB from Firebase")
+                                    }
+                                } finally {
+                                    try { delay(500) } catch (_: Exception) {}
+                                    updatingEventTypes.remove(k)
+                                }
                             }
                         }
-                        if (changed) _eventStatuses.value = merged
                     } catch (e: Exception) {
                         Log.e(TAG, "Error parsing Firebase event statuses", e)
                     }
