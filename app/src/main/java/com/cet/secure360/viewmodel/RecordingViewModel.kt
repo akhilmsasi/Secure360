@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.cet.secure360.localdatabase.ApiService
+import com.cet.secure360.model.CrashData
 import com.cet.secure360.model.EventStatus
 import com.cet.secure360.model.IncidentRecord
 import com.cet.secure360.model.RecordingStatus
@@ -18,6 +19,11 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlin.math.atan2
+import kotlin.math.cos
+import kotlin.math.pow
+import kotlin.math.sin
+import kotlin.math.sqrt
 
 class RecordingViewModel(private val apiService: ApiService) : ViewModel() {
 
@@ -50,6 +56,7 @@ class RecordingViewModel(private val apiService: ApiService) : ViewModel() {
         startAutoCheck()
         startMonitoring()
         startEventStatusMonitoring()
+        startCrashEventMonitoring()
     }
 
     private fun startRecordingStatusMonitoring() {
@@ -73,6 +80,57 @@ class RecordingViewModel(private val apiService: ApiService) : ViewModel() {
                     }
                 })
         }
+    }
+
+    private fun startCrashEventMonitoring() {
+
+        Log.d(TAG, "startCrashEventMonitoring: Entry UserName :: ${_username.value}")
+
+        val database = FirebaseDatabase.getInstance().reference
+            database.child("CrashEvents").addValueEventListener(object : ValueEventListener {
+                    override fun onDataChange(p0: DataSnapshot) {
+
+
+                        for (snapshot in p0.children){
+
+                            Log.d(TAG, "onDataChange: SampleCrashData :: $snapshot")
+
+                            val data = snapshot.getValue(CrashData::class.java)
+                            val distance = calculateDistance(data?.lat!!,data?.long!!)
+                            Log.d(TAG, "onDataChange: Distance :: $distance")
+                            if (_recordingStatus.value == 0 && distance <1){
+                                Log.d(TAG, "onDataChange: CrashEvent :: Recording started for crash event")
+                                setRecordingStatus(1)
+                            }
+
+                        }
+
+//                        setRecordingStatus(if (_recordingStatus.value == 1) 0 else 1)
+                    }
+
+                    override fun onCancelled(p0: DatabaseError) {
+//                        TODO("Not yet implemented")
+                    }
+                })
+
+    }
+
+    fun calculateDistance(
+        lat1: Double, lon1: Double,
+        lat2: Double = 8.5458566, lon2: Double = 76.9037658
+    ): Double {
+        val earthRadius = 6371.0 // Radius of the earth in km
+
+        val dLat = Math.toRadians(lat2 - lat1)
+        val dLon = Math.toRadians(lon2 - lon1)
+
+        val a = sin(dLat / 2).pow(2) +
+                cos(Math.toRadians(lat1)) * cos(Math.toRadians(lat2)) *
+                sin(dLon / 2).pow(2)
+
+        val c = 2 * atan2(sqrt(a), sqrt(1 - a))
+
+        return earthRadius * c
     }
 
     /**
