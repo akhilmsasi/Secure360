@@ -36,52 +36,85 @@ class RecordingViewModel(private val apiService: ApiService) : ViewModel() {
     val eventStatuses = _eventStatuses.asStateFlow()
 
     init {
+        // Initial fetch
         refreshStatus()
+        // Start polling workers
         startAutoCheck()
         startMonitoring()
         startEventStatusMonitoring()
     }
 
-    // Function to fetch the value once
+    /**
+     * Public method to refresh status manually.
+     */
     fun refreshStatus() {
         viewModelScope.launch {
-            try {
-                val response = apiService.getRecordingStatus()
-                if (response.isSuccessful) {
-                    response.body()?.let {
+            fetchRecordingStatusInternal()
+        }
+    }
+
+    /**
+     * Internal suspend function to fetch status. 
+     * Skips if a manual update is in progress to avoid race conditions.
+     */
+    private suspend fun fetchRecordingStatusInternal() {
+        if (_isLoading.value) return
+
+        try {
+            val response = apiService.getRecordingStatus()
+            if (response.isSuccessful) {
+                response.body()?.let {
+                    // Double check isLoading to ensure no manual update started during the network call
+                    if (!_isLoading.value) {
                         _recordingStatus.value = it.status
                     }
-                } else {
-                    _errorMessage.value = "Server error: ${response.code()}"
                 }
-            } catch (e: Exception) {
-                _errorMessage.value = "Network failure: ${e.message}"
+            } else {
+                Log.e(TAG, "Server error during refresh: ${response.code()}")
             }
+        } catch (e: Exception) {
+            Log.e(TAG, "Network failure during refresh: ${e.message}")
         }
     }
 
     fun startAutoCheck() {
         viewModelScope.launch {
             while (true) {
-                refreshStatus()
-                delay(500) // Poll every 500ms
+                fetchRecordingStatusInternal()
+                delay(1500) // Poll every 1.5 seconds (less aggressive than 500ms)
             }
         }
     }
 
     fun setRecordingStatus(newStatus: Int) {
+        Log.d(TAG, "setRecordingStatus: Entry :: $newStatus")
         viewModelScope.launch {
             _isLoading.value = true
+            
+            // Optimistic UI update: Assume success for better responsiveness
+            val previousStatus = _recordingStatus.value
+            _recordingStatus.value = newStatus
+            
             try {
                 val statusObject = RecordingStatus(status = newStatus)
                 val response = apiService.updateRecordingStatus(statusObject)
 
-                if (response.isSuccessful) {
-                    _recordingStatus.value = newStatus
+                Log.d(TAG, "setRecordingStatus: Update Recording status :: ${response.isSuccessful}")
+
+
+                if (!response.isSuccessful) {
+                    // Rollback if server update failed
+                    _recordingStatus.value = previousStatus
+                    _errorMessage.value = "Server error: ${response.code()}"
                 }
             } catch (e: Exception) {
+                // Rollback if network failed
+                _recordingStatus.value = previousStatus
                 _errorMessage.value = "Failed to update: ${e.message}"
             } finally {
+                // Stay in loading state for a short cooldown to let server state stabilize 
+                // and avoid immediate polling overwriting our change.
+                delay(1000)
                 _isLoading.value = false
             }
         }
@@ -102,7 +135,7 @@ class RecordingViewModel(private val apiService: ApiService) : ViewModel() {
                 } catch (e: Exception) {
                     Log.e(TAG, "Error fetching incidents", e)
                 }
-                delay(500) // Polls every 500ms
+                delay(2000) // Polls every 2 seconds
             }
         }
     }
@@ -123,7 +156,7 @@ class RecordingViewModel(private val apiService: ApiService) : ViewModel() {
                 } catch (e: Exception) {
                     Log.e(TAG, "Error fetching event statuses", e)
                 }
-                delay(500)
+                delay(2000) // Poll every 2 seconds
             }
         }
     }
