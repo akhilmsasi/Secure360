@@ -18,6 +18,7 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
+import com.cet.secure360.localdatabase.RetrofitClient
 
 @Composable
 fun VideoPlayerScreen(
@@ -25,11 +26,14 @@ fun VideoPlayerScreen(
     onBackClick: () -> Unit
 ) {
     val context = LocalContext.current
+
+    val BASE_URL = "http://192.168.1.47/"
+    val VIDEO_URL = BASE_URL +"Videos/"
     
     // Initialize ExoPlayer
     val exoPlayer = remember {
         ExoPlayer.Builder(context).build().apply {
-            val mediaItem = MediaItem.fromUri(Uri.parse(videoUrl))
+            val mediaItem = MediaItem.fromUri(Uri.parse(VIDEO_URL+videoUrl))
             setMediaItem(mediaItem)
             prepare()
             playWhenReady = true

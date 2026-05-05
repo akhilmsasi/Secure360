@@ -1,5 +1,6 @@
 package com.cet.secure360.viewmodel
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.util.Log
 import androidx.lifecycle.ViewModel
@@ -82,6 +83,7 @@ class RecordingViewModel(private val apiService: ApiService) : ViewModel() {
         }
     }
 
+    @SuppressLint("SuspiciousIndentation")
     private fun startCrashEventMonitoring() {
 
         Log.d(TAG, "startCrashEventMonitoring: Entry UserName :: ${_username.value}")
